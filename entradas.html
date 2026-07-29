@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entradas para Analisar - Race Inteligente LIVE</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="topo">
+    <div class="logo-area">
+        <div class="logo-circle">RI</div>
+        <div>
+            <h1>Entradas para Analisar</h1>
+            <p>Cadastre os jogos que serão monitorados aos 65 minutos</p>
+        </div>
+    </div>
+</header>
+
+<main class="container">
+
+    <!-- Cadastro de nova entrada -->
+
+    <section class="card">
+
+        <h2>Nova Entrada</h2>
+
+        <label for="dataJogo">Data</label>
+        <input type="date" id="dataJogo">
+
+        <label for="liga">Competição</label>
+        <select id="liga">
+            <option value="">Selecione uma liga</option>
+        </select>
+
+        <label for="rodada">Rodada</label>
+        <input type="text" id="rodada" placeholder="Ex: 2ª Fase - Volta">
+
+        <label for="timeCasa">Time Casa</label>
+        <select id="timeCasa">
+            <option value="">Selecione o time da casa</option>
+        </select>
+
+        <label for="timeVisitante">Time Visitante</label>
+        <select id="timeVisitante">
+            <option value="">Selecione o time visitante</option>
+        </select>
+
+        <label for="favorito">Favorito</label>
+        <select id="favorito">
+            <option value="">Selecione o favorito</option>
+        </select>
+
+        <label for="oddPreLive">Odd Pré-Live</label>
+        <input type="number" step="0.01" id="oddPreLive" placeholder="Ex: 1.72">
+
+        <button id="btnAdicionarEntrada" class="btn-success">
+            Adicionar Entrada
+        </button>
+
+    </section>
+
+    <!-- Lista de entradas -->
+
+    <section class="card">
+
+        <h2>Jogos Monitorados</h2>
+
+        <div id="listaEntradas"></div>
+
+    </section>
+
+    <a href="index.html" class="btn">Voltar ao Início</a>
+
+</main>
+
+<footer class="rodape">
+    Race Inteligente LIVE Cloud v0.1 Alpha
+</footer>
+
+<script src="js/app.js"></script>
+
+<script>
+
+function carregarLigas() {
+
+    const ligas = RaceInteligente.obterLigas();
+    const select = document.getElementById("liga");
+
+    select.innerHTML = "<option value="">Selecione uma liga</option>";
+
+    ligas.forEach(liga => {
+
+        const option = document.createElement("option");
+        option.value = liga.nome;
+        option.textContent = liga.nome;
+
+        select.appendChild(option);
+
+    });
+
+}
+
+function carregarTimes() {
+
+    const times = RaceInteligente.obterTimes();
+
+    const casa = document.getElementById("timeCasa");
+    const visitante = document.getElementById("timeVisitante");
+    const favorito = document.getElementById("favorito");
+
+    casa.innerHTML = "<option value="">Selecione o time da casa</option>";
+    visitante.innerHTML = "<option value="">Selecione o time visitante</option>";
+    favorito.innerHTML = "<option value="">Selecione o favorito</option>";
+
+    times.forEach(time => {
+
+        const o1 = document.createElement("option");
+        o1.value = time.nome;
+        o1.textContent = time.nome;
+
+        const o2 = o1.cloneNode(true);
+        const o3 = o1.cloneNode(true);
+
+        casa.appendChild(o1);
+        visitante.appendChild(o2);
+        favorito.appendChild(o3);
+
+    });
+
+}
+
+function renderEntradas() {
+
+    const lista = document.getElementById("listaEntradas");
+    const entradas = RaceInteligente.obterEntradas();
+
+    if (entradas.length === 0) {
+
+        lista.innerHTML = "<p style='color:#94a3b8'>Nenhum jogo cadastrado.</p>";
+        return;
+
+    }
+
+    lista.innerHTML = "";
+
+    entradas.forEach(jogo => {
+
+        const card = document.createElement("div");
+        card.className = "card";
+
+        card.innerHTML = `
+
+            <h3>${jogo.casa} x ${jogo.visitante}</h3>
+
+            <p><strong>Liga:</strong> ${jogo.liga}</p>
+            <p><strong>Data:</strong> ${jogo.data}</p>
+            <p><strong>Favorito:</strong> ${jogo.favorito}</p>
+            <p><strong>Odd Pré-Live:</strong> ${jogo.oddPreLive}</p>
+
+            <div style="margin-top:16px; display:flex; gap:12px; flex-wrap:wrap;">
+
+                <a href="live.html?id=${jogo.id}" class="btn">
+                    Analisar
+                </a>
+
+                <button class="btn-danger" onclick="excluirEntrada('${jogo.id}')">
+                    Excluir
+                </button>
+
+            </div>
+
+        `;
+
+        lista.appendChild(card);
+
+    });
+
+}
+
+function excluirEntrada(id) {
+
+    if (!confirm("Deseja remover este jogo?")) return;
+
+    RaceInteligente.removerEntrada(id);
+
+    renderEntradas();
+
+}
+
+document.getElementById("btnAdicionarEntrada").addEventListener("click", () => {
+
+    const jogo = {
+
+        data: document.getElementById("dataJogo").value,
+        liga: document.getElementById("liga").value,
+        rodada: document.getElementById("rodada").value,
+        casa: document.getElementById("timeCasa").value,
+        visitante: document.getElementById("timeVisitante").value,
+        favorito: document.getElementById("favorito").value,
+        oddPreLive: document.getElementById("oddPreLive").value,
+        minuto: "65'",
+        status: "Aguardando"
+
+    };
+
+    if (!jogo.data || !jogo.liga || !jogo.casa || !jogo.visitante || !jogo.favorito) {
+
+        alert("Preencha os campos obrigatórios.");
+        return;
+
+    }
+
+    RaceInteligente.adicionarEntrada(jogo);
+
+    renderEntradas();
+
+    document.getElementById("dataJogo").value = "";
+    document.getElementById("liga").value = "";
+    document.getElementById("rodada").value = "";
+    document.getElementById("timeCasa").value = "";
+    document.getElementById("timeVisitante").value = "";
+    document.getElementById("favorito").value = "";
+    document.getElementById("oddPreLive").value = "";
+
+});
+
+carregarLigas();
+carregarTimes();
+renderEntradas();
+
+</script>
+
+</body>
+</html>

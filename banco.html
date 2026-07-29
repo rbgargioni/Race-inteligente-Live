@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banco de Dados - Race Inteligente LIVE</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="topo">
+    <div class="logo-area">
+        <div class="logo-circle">RI</div>
+        <div>
+            <h1>Banco de Dados</h1>
+            <p>Gerenciamento de ligas e times</p>
+        </div>
+    </div>
+</header>
+
+<main class="container">
+
+    <!-- Cadastro de Liga -->
+
+    <section class="card">
+
+        <h2>Nova Liga</h2>
+
+        <label for="nomeLiga">Nome da Liga</label>
+        <input type="text" id="nomeLiga" placeholder="Ex: Champions League">
+
+        <label for="paisLiga">País / Organização</label>
+        <input type="text" id="paisLiga" placeholder="Ex: UEFA">
+
+        <label for="nivelLiga">Nível Técnico (1 a 5)</label>
+        <select id="nivelLiga">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5" selected>5</option>
+        </select>
+
+        <button id="btnAdicionarLiga" class="btn-success">
+            Adicionar Liga
+        </button>
+
+    </section>
+
+    <!-- Cadastro de Time -->
+
+    <section class="card">
+
+        <h2>Novo Time</h2>
+
+        <label for="nomeTime">Nome do Time</label>
+        <input type="text" id="nomeTime" placeholder="Ex: Dinamo Zagreb">
+
+        <label for="ligaTime">Liga</label>
+        <select id="ligaTime"></select>
+
+        <label for="forcaTime">Força Técnica (1 a 5)</label>
+        <select id="forcaTime">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5" selected>5</option>
+        </select>
+
+        <button id="btnAdicionarTime" class="btn-success">
+            Adicionar Time
+        </button>
+
+    </section>
+
+    <!-- Ligas -->
+
+    <section class="card">
+
+        <h2>Ligas Cadastradas</h2>
+
+        <div id="listaLigas"></div>
+
+    </section>
+
+    <!-- Times -->
+
+    <section class="card">
+
+        <h2>Times Cadastrados</h2>
+
+        <div id="listaTimes"></div>
+
+    </section>
+
+    <a href="index.html" class="btn">Voltar ao Início</a>
+
+</main>
+
+<footer class="rodape">
+    Race Inteligente LIVE Cloud v0.1 Alpha
+</footer>
+
+<script src="js/app.js"></script>
+
+<script>
+
+function carregarLigasSelect() {
+
+    const ligas = RaceInteligente.obterLigas();
+    const select = document.getElementById("ligaTime");
+
+    select.innerHTML = "";
+
+    ligas.forEach(liga => {
+
+        const option = document.createElement("option");
+        option.value = liga.nome;
+        option.textContent = liga.nome;
+
+        select.appendChild(option);
+
+    });
+
+}
+
+function renderLigas() {
+
+    const ligas = RaceInteligente.obterLigas();
+    const lista = document.getElementById("listaLigas");
+
+    lista.innerHTML = "";
+
+    ligas.forEach((liga, index) => {
+
+        const card = document.createElement("div");
+        card.className = "card";
+
+        card.innerHTML = `
+
+            <h3>${liga.nome}</h3>
+
+            <p><strong>País:</strong> ${liga.pais}</p>
+            <p><strong>Nível:</strong> ${liga.nivel}</p>
+
+            <button class="btn-danger" onclick="removerLiga(${index})">
+                Remover
+            </button>
+
+        `;
+
+        lista.appendChild(card);
+
+    });
+
+}
+
+function renderTimes() {
+
+    const times = RaceInteligente.obterTimes();
+    const lista = document.getElementById("listaTimes");
+
+    lista.innerHTML = "";
+
+    times.forEach((time, index) => {
+
+        const card = document.createElement("div");
+        card.className = "card";
+
+        card.innerHTML = `
+
+            <h3>${time.nome}</h3>
+
+            <p><strong>Liga:</strong> ${time.liga}</p>
+            <p><strong>Força:</strong> ${time.forca}</p>
+
+            <button class="btn-danger" onclick="removerTime(${index})">
+                Remover
+            </button>
+
+        `;
+
+        lista.appendChild(card);
+
+    });
+
+}
+
+function removerLiga(index) {
+
+    const ligas = RaceInteligente.obterLigas();
+
+    ligas.splice(index, 1);
+
+    localStorage.setItem("ri_ligas", JSON.stringify(ligas));
+
+    carregarLigasSelect();
+    renderLigas();
+
+}
+
+function removerTime(index) {
+
+    const times = RaceInteligente.obterTimes();
+
+    times.splice(index, 1);
+
+    localStorage.setItem("ri_times", JSON.stringify(times));
+
+    renderTimes();
+
+}
+
+document.getElementById("btnAdicionarLiga").addEventListener("click", () => {
+
+    const nome = document.getElementById("nomeLiga").value.trim();
+    const pais = document.getElementById("paisLiga").value.trim();
+    const nivel = document.getElementById("nivelLiga").value;
+
+    if (!nome || !pais) {
+
+        alert("Preencha os campos da liga.");
+        return;
+
+    }
+
+    const ligas = RaceInteligente.obterLigas();
+
+    ligas.push({ nome, pais, nivel });
+
+    localStorage.setItem("ri_ligas", JSON.stringify(ligas));
+
+    document.getElementById("nomeLiga").value = "";
+    document.getElementById("paisLiga").value = "";
+
+    carregarLigasSelect();
+    renderLigas();
+
+});
+
+document.getElementById("btnAdicionarTime").addEventListener("click", () => {
+
+    const nome = document.getElementById("nomeTime").value.trim();
+    const liga = document.getElementById("ligaTime").value;
+    const forca = document.getElementById("forcaTime").value;
+
+    if (!nome || !liga) {
+
+        alert("Preencha os campos do time.");
+        return;
+
+    }
+
+    const times = RaceInteligente.obterTimes();
+
+    times.push({ nome, liga, forca });
+
+    localStorage.setItem("ri_times", JSON.stringify(times));
+
+    document.getElementById("nomeTime").value = "";
+
+    renderTimes();
+
+});
+
+carregarLigasSelect();
+renderLigas();
+renderTimes();
+
+</script>
+
+</body>
+</html>

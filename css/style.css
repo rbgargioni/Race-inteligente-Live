@@ -1,0 +1,550 @@
+/* =====================================================
+   RACE INTELIGENTE LIVE - STYLE.CSS
+   Versão: v0.1 Alpha
+   ===================================================== */
+
+/* Reset */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Variáveis */
+
+:root {
+
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --surface-2: #273449;
+
+    --border: #334155;
+
+    --text: #f8fafc;
+    --text-secondary: #94a3b8;
+
+    --green: #22c55e;
+    --yellow: #f59e0b;
+    --orange: #f97316;
+    --red: #ef4444;
+
+    --blue: #2563eb;
+
+    --radius: 16px;
+    --shadow: 0 10px 25px rgba(0,0,0,0.35);
+
+}
+
+/* Base */
+
+body {
+
+    background: var(--bg);
+
+    color: var(--text);
+
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Helvetica,
+        Arial,
+        sans-serif;
+
+    line-height: 1.5;
+
+}
+
+/* Topo */
+
+.topo {
+
+    background: var(--surface);
+
+    border-bottom: 1px solid var(--border);
+
+    padding: 22px 20px;
+
+    position: sticky;
+
+    top: 0;
+
+    z-index: 100;
+
+}
+
+.logo-area {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 16px;
+
+}
+
+.logo-circle {
+
+    width: 58px;
+    height: 58px;
+
+    border-radius: 50%;
+
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    font-size: 22px;
+    font-weight: bold;
+
+    color: white;
+
+}
+
+.logo-area h1 {
+
+    font-size: 1.35rem;
+
+    font-weight: 700;
+
+}
+
+.logo-area p {
+
+    color: var(--text-secondary);
+
+    font-size: 0.92rem;
+
+}
+
+/* Container */
+
+.container {
+
+    max-width: 900px;
+
+    margin: 0 auto;
+
+    padding: 24px 18px 100px;
+
+}
+
+/* Painel LIVE */
+
+.painel-live {
+
+    background: var(--surface);
+
+    border: 1px solid var(--border);
+
+    border-radius: var(--radius);
+
+    padding: 20px;
+
+    box-shadow: var(--shadow);
+
+    margin-bottom: 24px;
+
+}
+
+.painel-live h2 {
+
+    font-size: 1rem;
+
+    margin-bottom: 18px;
+
+    letter-spacing: 0.5px;
+
+    color: var(--text);
+
+}
+
+.painel-grid {
+
+    display: grid;
+
+    grid-template-columns: repeat(2, 1fr);
+
+    gap: 14px;
+
+}
+
+.painel-item {
+
+    background: var(--surface-2);
+
+    border: 1px solid var(--border);
+
+    border-radius: 14px;
+
+    padding: 16px;
+
+}
+
+.painel-item span {
+
+    display: block;
+
+    color: var(--text-secondary);
+
+    font-size: 0.82rem;
+
+    margin-bottom: 8px;
+
+}
+
+.painel-item strong {
+
+    font-size: 1.25rem;
+
+    color: var(--text);
+
+}
+
+/* Menu principal */
+
+.menu-principal {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 16px;
+
+}
+
+.menu-card {
+
+    background: var(--surface);
+
+    border: 1px solid var(--border);
+
+    border-radius: var(--radius);
+
+    padding: 22px;
+
+    text-decoration: none;
+
+    color: var(--text);
+
+    transition: all 0.25s ease;
+
+    box-shadow: var(--shadow);
+
+}
+
+.menu-card:hover {
+
+    transform: translateY(-2px);
+
+    border-color: var(--blue);
+
+}
+
+.menu-card h3 {
+
+    font-size: 1.12rem;
+
+    margin-bottom: 8px;
+
+}
+
+.menu-card p {
+
+    color: var(--text-secondary);
+
+    font-size: 0.95rem;
+
+}
+
+/* Cards gerais */
+
+.card {
+
+    background: var(--surface);
+
+    border: 1px solid var(--border);
+
+    border-radius: var(--radius);
+
+    padding: 20px;
+
+    margin-bottom: 20px;
+
+    box-shadow: var(--shadow);
+
+}
+
+.card h2 {
+
+    margin-bottom: 16px;
+
+    font-size: 1.05rem;
+
+}
+
+/* Formulários */
+
+label {
+
+    display: block;
+
+    margin-bottom: 8px;
+
+    font-size: 0.92rem;
+
+    color: var(--text-secondary);
+
+}
+
+input,
+select,
+textarea {
+
+    width: 100%;
+
+    background: var(--surface-2);
+
+    border: 1px solid var(--border);
+
+    color: var(--text);
+
+    border-radius: 12px;
+
+    padding: 14px 16px;
+
+    margin-bottom: 16px;
+
+    font-size: 1rem;
+
+    outline: none;
+
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+
+    border-color: var(--blue);
+
+}
+
+textarea {
+
+    resize: vertical;
+
+    min-height: 110px;
+
+}
+
+/* Botões */
+
+button,
+.btn {
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    background: var(--blue);
+
+    color: white;
+
+    border: none;
+
+    border-radius: 14px;
+
+    padding: 15px 20px;
+
+    font-size: 1rem;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    text-decoration: none;
+
+    transition: all 0.2s ease;
+
+}
+
+button:hover,
+.btn:hover {
+
+    opacity: 0.92;
+
+}
+
+.btn-success {
+
+    background: var(--green);
+
+}
+
+.btn-warning {
+
+    background: var(--yellow);
+
+    color: #111827;
+
+}
+
+.btn-danger {
+
+    background: var(--red);
+
+}
+
+/* Tabelas */
+
+table {
+
+    width: 100%;
+
+    border-collapse: collapse;
+
+    margin-top: 12px;
+
+}
+
+th,
+td {
+
+    border-bottom: 1px solid var(--border);
+
+    padding: 14px 10px;
+
+    text-align: left;
+
+    font-size: 0.95rem;
+
+}
+
+th {
+
+    color: var(--text-secondary);
+
+    font-weight: 600;
+
+}
+
+/* Status */
+
+.status {
+
+    display: inline-block;
+
+    padding: 6px 10px;
+
+    border-radius: 999px;
+
+    font-size: 0.8rem;
+
+    font-weight: 700;
+
+}
+
+.status-premium {
+
+    background: rgba(34,197,94,0.15);
+
+    color: var(--green);
+
+}
+
+.status-forte {
+
+    background: rgba(245,158,11,0.15);
+
+    color: var(--yellow);
+
+}
+
+.status-moderada {
+
+    background: rgba(249,115,22,0.15);
+
+    color: var(--orange);
+
+}
+
+.status-nao {
+
+    background: rgba(239,68,68,0.15);
+
+    color: var(--red);
+
+}
+
+/* Rodapé */
+
+.rodape {
+
+    text-align: center;
+
+    color: var(--text-secondary);
+
+    padding: 28px 16px 40px;
+
+    font-size: 0.88rem;
+
+}
+
+/* Responsividade */
+
+@media (min-width: 768px) {
+
+    .painel-grid {
+
+        grid-template-columns: repeat(4, 1fr);
+
+    }
+
+    .menu-principal {
+
+        display: grid;
+
+        grid-template-columns: repeat(2, 1fr);
+
+        gap: 18px;
+
+    }
+
+}
+
+/* Animação */
+
+@keyframes fadeIn {
+
+    from {
+
+        opacity: 0;
+
+        transform: translateY(8px);
+
+    }
+
+    to {
+
+        opacity: 1;
+
+        transform: translateY(0);
+
+    }
+
+}
+
+.card,
+.menu-card,
+.painel-live {
+
+    animation: fadeIn 0.3s ease;
+
+}

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova Análise LIVE - Race Inteligente</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="topo">
+    <div class="logo-area">
+        <div class="logo-circle">RI</div>
+        <div>
+            <h1>Nova Análise (LIVE)</h1>
+            <p>Análise de pressão ofensiva aos 65 minutos</p>
+        </div>
+    </div>
+</header>
+
+<main class="container">
+
+    <!-- Identificação -->
+
+    <section class="card">
+
+        <h2>Identificação da Partida</h2>
+
+        <label for="jogo">Jogo</label>
+        <input type="text" id="jogo" placeholder="Ex: Dinamo Zagreb x Thun">
+
+        <label for="minuto">Minuto</label>
+        <input type="number" id="minuto" value="65">
+
+        <label for="oddRace">Odd Race</label>
+        <input type="number" step="0.01" id="oddRace" placeholder="Ex: 1.74">
+
+    </section>
+
+    <!-- Estatísticas -->
+
+    <section class="card">
+
+        <h2>Estatísticas do Favorito</h2>
+
+        <label for="posse">Posse (%)</label>
+        <input type="number" id="posse">
+
+        <label for="ataques">Ataques</label>
+        <input type="number" id="ataques">
+
+        <label for="ataquesPerigosos">Ataques Perigosos</label>
+        <input type="number" id="ataquesPerigosos">
+
+        <label for="finalizacoes">Finalizações</label>
+        <input type="number" id="finalizacoes">
+
+        <label for="noAlvo">Finalizações no Alvo</label>
+        <input type="number" id="noAlvo">
+
+        <label for="escanteios">Escanteios</label>
+        <input type="number" id="escanteios">
+
+    </section>
+
+    <!-- Contexto -->
+
+    <section class="card">
+
+        <h2>Contexto Tático</h2>
+
+        <label>
+            <input type="checkbox" id="precisaVencer">
+            O favorito precisa vencer
+        </label>
+
+        <br><br>
+
+        <label>
+            <input type="checkbox" id="expulsaoAdversario">
+            O adversário teve jogador expulso
+        </label>
+
+    </section>
+
+    <!-- Resultado -->
+
+    <section class="card">
+
+        <h2>Resultado da Análise</h2>
+
+        <div class="painel-grid">
+
+            <div class="painel-item">
+                <span>IQP</span>
+                <strong id="resultadoIQP">--</strong>
+            </div>
+
+            <div class="painel-item">
+                <span>Classificação</span>
+                <strong id="resultadoClassificacao">--</strong>
+            </div>
+
+        </div>
+
+        <div style="margin-top:20px;">
+
+            <button id="btnCalcular" class="btn-success">
+                Calcular IQP
+            </button>
+
+            <button id="btnSalvar" class="btn">
+                Salvar no Histórico
+            </button>
+
+        </div>
+
+    </section>
+
+    <a href="entradas.html" class="btn">Voltar para Entradas</a>
+
+</main>
+
+<footer class="rodape">
+    Race Inteligente LIVE Cloud v0.1 Alpha
+</footer>
+
+<script src="js/app.js"></script>
+
+<script>
+
+let ultimoIQP = null;
+let ultimaClassificacao = null;
+
+const params = new URLSearchParams(window.location.search);
+const jogoId = params.get("id");
+
+if (jogoId) {
+
+    const entradas = RaceInteligente.obterEntradas();
+    const jogo = entradas.find(j => j.id === jogoId);
+
+    if (jogo) {
+
+        document.getElementById("jogo").value = `${jogo.casa} x ${jogo.visitante}`;
+
+    }
+
+}
+
+document.getElementById("btnCalcular").addEventListener("click", () => {
+
+    const dados = {
+
+        posse: parseFloat(document.getElementById("posse").value || 0),
+        ataques: parseInt(document.getElementById("ataques").value || 0),
+        ataquesPerigosos: parseInt(document.getElementById("ataquesPerigosos").value || 0),
+        finalizacoes: parseInt(document.getElementById("finalizacoes").value || 0),
+        noAlvo: parseInt(document.getElementById("noAlvo").value || 0),
+        escanteios: parseInt(document.getElementById("escanteios").value || 0),
+
+        precisaVencer: document.getElementById("precisaVencer").checked,
+        expulsaoAdversario: document.getElementById("expulsaoAdversario").checked,
+
+        odd: parseFloat(document.getElementById("oddRace").value || 0)
+
+    };
+
+    ultimoIQP = RaceInteligente.calcularIQP(dados);
+    ultimaClassificacao = RaceInteligente.classificarEntrada(ultimoIQP);
+
+    document.getElementById("resultadoIQP").textContent = ultimoIQP;
+    document.getElementById("resultadoClassificacao").textContent = ultimaClassificacao;
+
+});
+
+document.getElementById("btnSalvar").addEventListener("click", () => {
+
+    if (ultimoIQP === null) {
+
+        alert("Calcule o IQP antes de salvar.");
+        return;
+
+    }
+
+    const analise = {
+
+        data: new Date().toLocaleDateString("pt-BR"),
+
+        jogo: document.getElementById("jogo").value,
+        minuto: document.getElementById("minuto").value,
+
+        iqp: ultimoIQP,
+        classificacao: ultimaClassificacao,
+
+        odd: document.getElementById("oddRace").value,
+
+        posse: document.getElementById("posse").value,
+        ataques: document.getElementById("ataques").value,
+        ataquesPerigosos: document.getElementById("ataquesPerigosos").value,
+        finalizacoes: document.getElementById("finalizacoes").value,
+        noAlvo: document.getElementById("noAlvo").value,
+        escanteios: document.getElementById("escanteios").value,
+
+        precisaVencer: document.getElementById("precisaVencer").checked,
+        expulsaoAdversario: document.getElementById("expulsaoAdversario").checked
+
+    };
+
+    RaceInteligente.adicionarHistorico(analise);
+
+    alert("Análise salva no histórico.");
+
+});
+
+</script>
+
+</body>
+</html>
