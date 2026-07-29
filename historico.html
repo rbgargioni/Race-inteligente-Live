@@ -47,16 +47,22 @@
         </div>
     </section>
 
-    <!-- Ferramenta de Testes/Exportação -->
+    <!-- Ferramenta de Testes e Gerenciamento -->
     <section class="card">
-        <h2>Gerador e Exportador de Bateria de Teste</h2>
+        <h2>Gerenciamento do Banco de Dados</h2>
         <p style="color: #94a3b8; margin-bottom: 15px; font-size: 0.9rem;">
-            Clique no botão abaixo para gerar uma bateria simulada de 10 jogos com métricas reais e exportá-las diretamente para o banco de dados Firestore.
+            Gere dados de teste para simulação ou limpe todo o histórico do banco de dados Firestore.
         </p>
 
-        <button id="btnExportarBateria" class="btn-success">
-            Gerar e Exportar Bateria de Testes (10 Jogos)
-        </button>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button id="btnExportarBateria" class="btn-success" style="flex: 1; min-width: 200px;">
+                Gerar Bateria de Testes (10 Jogos)
+            </button>
+
+            <button id="btnLimparBanco" style="flex: 1; min-width: 200px; background-color: #ef4444; color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                Limpar Todo o Histórico
+            </button>
+        </div>
     </section>
 
     <!-- Lista de Análises -->
@@ -70,11 +76,11 @@
         </div>
     </section>
 
-    <a href="index.html" class="btn">Voltar ao Início</a>
+    <a href="index.html" class="btn" style="margin-top:20px; display:inline-block;">Voltar ao Início</a>
 
 </main>
 
-<footer class="rodape">
+<footer class="rodape" style="text-align: center; padding: 20px; color: #64748b; font-size: 0.85rem;">
     Race Inteligente LIVE Cloud v0.1 Alpha
 </footer>
 
@@ -89,7 +95,10 @@
 
     import { 
         collection, 
-        addDoc 
+        addDoc, 
+        deleteDoc, 
+        doc, 
+        getDocs 
     } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
     // Renderizar o Histórico vindo da nuvem
@@ -126,6 +135,7 @@
             historico.forEach(item => {
                 const card = document.createElement("div");
                 card.className = "card";
+                card.style.position = "relative";
 
                 let classe = "status-nao";
                 if (item.classificacao === "PREMIUM") classe = "status-premium";
@@ -133,10 +143,15 @@
                 if (item.classificacao === "MODERADA") classe = "status-moderada";
 
                 card.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; padding-right: 35px;">
                         <h3>${item.jogo}</h3>
                         <span class="status ${classe}">${item.classificacao}</span>
                     </div>
+
+                    <!-- Botão de Excluir Item Individual -->
+                    <button class="btn-deletar-item" data-id="${item.id}" style="position: absolute; top: 15px; right: 15px; background: transparent; border: none; color: #ef4444; font-weight: bold; font-size: 1.1rem; cursor: pointer;" title="Excluir do banco">
+                        ✕
+                    </button>
 
                     <p><strong>Data:</strong> ${item.data}</p>
                     <p><strong>Minuto:</strong> ${item.minuto}'</p>
@@ -158,17 +173,33 @@
 
                 lista.appendChild(card);
             });
+
+            // Event Listener para os botões de exclusão individual
+            document.querySelectorAll(".btn-deletar-item").forEach(btn => {
+                btn.addEventListener("click", async (e) => {
+                    const idDoc = e.target.getAttribute("data-id");
+                    if (confirm("Deseja realmente remover esta análise do banco de dados?")) {
+                        try {
+                            await deleteDoc(doc(db, "ri_historico", idDoc));
+                            await carregarHistoricoNuvem();
+                        } catch (err) {
+                            alert("Erro ao excluir documento: " + err.message);
+                        }
+                    }
+                });
+            });
+
         } catch (err) {
             console.error(err);
             lista.innerHTML = "<p style='color:#ef4444'>Erro ao carregar dados do Firestore. Verifique se as Regras de Segurança estão liberadas no Console do Firebase.</p>";
         }
     }
 
-    // Botão para Gerar Bateria de Análises Simuladas e Exportar
+    // Botão para Gerar Bateria de Análises Simuladas
     document.getElementById("btnExportarBateria").addEventListener("click", async () => {
         const btn = document.getElementById("btnExportarBateria");
         btn.disabled = true;
-        btn.textContent = "Exportando para o Firestore...";
+        btn.textContent = "Exportando...";
 
         const bateriaSimulada = [
             { jogo: "Real Madrid x Getafe", data: new Date().toLocaleDateString("pt-BR"), minuto: "65", posse: "68", ataques: "85", ataquesPerigosos: "54", finalizacoes: "14", noAlvo: "7", escanteios: "8", precisaVencer: true, expulsaoAdversario: false, odd: "1.85", iqp: 87, classificacao: "PREMIUM" },
@@ -184,7 +215,6 @@
         ];
 
         try {
-            // Salva item por item para evitar problemas de batch
             for (const item of bateriaSimulada) {
                 await addDoc(collection(db, "ri_historico"), {
                     ...item,
@@ -194,11 +224,41 @@
             alert("Bateria enviada com sucesso para o Firestore!");
             await carregarHistoricoNuvem();
         } catch (e) {
-            console.error("Detalhes do erro:", e);
-            alert("Erro ao exportar. Detalhe técnico: " + e.message);
+            alert("Erro ao exportar: " + e.message);
         } finally {
             btn.disabled = false;
-            btn.textContent = "Gerar e Exportar Bateria de Testes (10 Jogos)";
+            btn.textContent = "Gerar Bateria de Testes (10 Jogos)";
+        }
+    });
+
+    // Botão para Limpar Todo o Histórico
+    document.getElementById("btnLimparBanco").addEventListener("click", async () => {
+        if (!confirm("TEM CERTEZA? Isso excluirá TODAS as análises salvas no Firestore!")) {
+            return;
+        }
+
+        const btn = document.getElementById("btnLimparBanco");
+        btn.disabled = true;
+        btn.textContent = "Excluindo...";
+
+        try {
+            const querySnapshot = await getDocs(collection(db, "ri_historico"));
+            
+            // Exclui cada documento da coleção
+            const promessasDeletar = querySnapshot.docs.map(documento => 
+                deleteDoc(doc(db, "ri_historico", documento.id))
+            );
+
+            await Promise.all(promessasDeletar);
+
+            alert("Histórico apagado com sucesso!");
+            await carregarHistoricoNuvem();
+        } catch (e) {
+            console.error("Erro ao limpar banco:", e);
+            alert("Erro ao apagar banco de dados: " + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = "Limpar Todo o Histórico";
         }
     });
 
