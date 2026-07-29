@@ -14,8 +14,8 @@
     <div class="logo-area">
         <div class="logo-circle">RI</div>
         <div>
-            <h1>Dashboard & Ranking de IQP</h1>
-            <p>Análise gráfica dos últimos 30 jogos cadastrados no Firestore</p>
+            <h1>Dashboard & Raio-X de Pressão</h1>
+            <p>Análise gráfica e perfil de desempenho dos times salvos no Firestore</p>
         </div>
     </div>
 </header>
@@ -61,9 +61,21 @@
         </div>
     </section>
 
-    <!-- LISTA DE DETALHES DO RANKING -->
+    <!-- RAIO-X DOS TIMES (PONTOS FORTES E FRACOS) -->
     <section class="card">
-        <h2>Tabela do Ranking de Pressão</h2>
+        <h2>Perfil de Desempenho por Time (Pontos Fortes e Fracos)</h2>
+        <p style="color: #94a3b8; margin-bottom: 20px; font-size: 0.9rem;">
+            Identificação de padrões dos times com base nas estatísticas salvas no banco de dados.
+        </p>
+
+        <div id="containerPerfilTimes" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
+            <p style="color:#94a3b8">Analisando histórico para gerar o perfil dos times...</p>
+        </div>
+    </section>
+
+    <!-- TABELA DETALHADA DO RANKING -->
+    <section class="card">
+        <h2>Tabela Completa de Posicionamento</h2>
         
         <div style="overflow-x: auto; margin-top: 15px;">
             <table style="width: 100%; border-collapse: collapse; text-align: left; color: #e2e8f0; font-size: 0.9rem;">
@@ -93,7 +105,7 @@
     Race Inteligente LIVE Cloud v0.1 Alpha
 </footer>
 
-<!-- Script de Integração com Firestore e Renderização do Gráfico -->
+<!-- Script de Módulo do Firebase e Chart.js -->
 <script type="module">
     import { db } from './js/firebase-config.js';
     import { 
@@ -109,12 +121,13 @@
         const tabela = document.getElementById("tabelaRanking");
 
         try {
-            // Busca até 30 registros da coleção
+            // Busca até 30 registros da coleção no Firestore
             const q = query(collection(db, "ri_historico"), limit(30));
             const querySnapshot = await getDocs(q);
 
             if (querySnapshot.empty) {
-                tabela.innerHTML = '<tr><td colspan="5" style="padding:15px; text-align:center; color:#94a3b8;">Nenhum jogo registrado para exibir o ranking.</td></tr>';
+                tabela.innerHTML = '<tr><td colspan="5" style="padding:15px; text-align:center; color:#94a3b8;">Nenhum jogo registrado para exibir no ranking.</td></tr>';
+                document.getElementById("containerPerfilTimes").innerHTML = "<p style='color:#94a3b8'>Cadastre partidas no histórico para gerar o perfil dos times.</p>";
                 return;
             }
 
@@ -126,7 +139,7 @@
             // Ordena os jogos do MAIOR IQP para o MENOR
             dados.sort((a, b) => Number(b.iqp) - Number(a.iqp));
 
-            // Atualiza os Cards Superiores de Resumo
+            // 1. Atualizar Cards de Resumo
             const total = dados.length;
             const somaIQP = dados.reduce((acc, curr) => acc + Number(curr.iqp || 0), 0);
             const mediaIQP = (somaIQP / total).toFixed(1);
@@ -140,7 +153,7 @@
             document.getElementById("dashTaxaElite").textContent = taxaElite + "%";
             document.getElementById("dashMaiorIQP").textContent = maiorIQP;
 
-            // Prepara arrays para o Gráfico
+            // 2. Preparar arrays do Gráfico e preencher Tabela
             const rotulosJogos = [];
             const valoresIQP = [];
             const coresBarras = [];
@@ -151,8 +164,7 @@
                 rotulosJogos.push(item.jogo || `Jogo #${index + 1}`);
                 valoresIQP.push(item.iqp);
 
-                // Define as cores dinâmicas
-                let cor = "#ef4444"; // Vermelho (Não Entrar)
+                let cor = "#ef4444"; // Vermelho
                 let badgeClass = "status-nao";
 
                 if (item.classificacao === "PREMIUM") {
@@ -168,7 +180,6 @@
 
                 coresBarras.push(cor);
 
-                // Preenche a tabela detalhada
                 const tr = document.createElement("tr");
                 tr.style.borderBottom = "1px solid #1e293b";
                 tr.innerHTML = `
@@ -181,11 +192,14 @@
                 tabela.appendChild(tr);
             });
 
-            // Renderiza o Gráfico de Ranking
+            // 3. Renderizar Gráfico Chart.js
             renderizarGraficoRanking(rotulosJogos, valoresIQP, coresBarras);
 
+            // 4. Gerar Análise de Pontos Fortes e Fracos por Time
+            gerarPerfilTimes(dados);
+
         } catch (error) {
-            console.error("Erro ao carregar ranking:", error);
+            console.error("Erro ao carregar dashboard:", error);
             tabela.innerHTML = '<tr><td colspan="5" style="padding:15px; text-align:center; color:#ef4444;">Erro ao carregar dados do banco de dados.</td></tr>';
         }
     }
@@ -235,7 +249,89 @@
         });
     }
 
-    // Executa ao carregar a página
+    function gerarPerfilTimes(dados) {
+        const container = document.getElementById("containerPerfilTimes");
+        container.innerHTML = "";
+
+        const mapaTimes = {};
+
+        dados.forEach(d => {
+            const nome = d.jogo || "Jogo Não Identificado";
+
+            if (!mapaTimes[nome]) {
+                mapaTimes[nome] = {
+                    jogos: 0,
+                    iqpTotal: 0,
+                    posseTotal: 0,
+                    ataquesPTotal: 0,
+                    finalizacoesTotal: 0,
+                    noAlvoTotal: 0,
+                    cantosTotal: 0
+                };
+            }
+
+            mapaTimes[nome].jogos += 1;
+            mapaTimes[nome].iqpTotal += Number(d.iqp || 0);
+            mapaTimes[nome].posseTotal += Number(d.posse || 0);
+            mapaTimes[nome].ataquesPTotal += Number(d.ataquesPerigosos || 0);
+            mapaTimes[nome].finalizacoesTotal += Number(d.finalizacoes || 0);
+            mapaTimes[nome].noAlvoTotal += Number(d.noAlvo || 0);
+            mapaTimes[nome].cantosTotal += Number(d.escanteios || 0);
+        });
+
+        Object.keys(mapaTimes).forEach(time => {
+            const t = mapaTimes[time];
+            const qtd = t.jogos;
+
+            const mediaIqp = (t.iqpTotal / qtd).toFixed(0);
+            const mediaAtqP = (t.ataquesPTotal / qtd).toFixed(1);
+            const mediaFin = (t.finalizacoesTotal / qtd).toFixed(1);
+            const mediaAlvo = (t.noAlvoTotal / qtd).toFixed(1);
+            const mediaCantos = (t.cantosTotal / qtd).toFixed(1);
+
+            const pontosFortes = [];
+            const pontosFracos = [];
+
+            // Regras de avaliação dos Pontos Fortes e Fracos
+            if (mediaIqp >= 80) pontosFortes.push(`<b>IQP Elevado:</b> Média de ${mediaIqp} pts de pressão.`);
+            else if (mediaIqp < 60) pontosFracos.push(`<b>IQP Baixo:</b> Média de apenas ${mediaIqp} pts.`);
+
+            if (mediaCantos >= 7) pontosFortes.push(`<b>Gerador de Cantos:</b> Média de ${mediaCantos} escanteios/jogo.`);
+            else if (mediaCantos < 4) pontosFracos.push(`<b>Poucos Escanteios:</b> Média de ${mediaCantos} cantos/jogo.`);
+
+            if (mediaAtqP >= 50) pontosFortes.push(`<b>Sufoco Constante:</b> Média de ${mediaAtqP} ataques perigosos.`);
+            else if (mediaAtqP < 30) pontosFracos.push(`<b>Pressão Fraca:</b> Média de apenas ${mediaAtqP} ataques perigosos.`);
+
+            if (mediaAlvo >= 5) pontosFortes.push(`<b>Pontaria Afiada:</b> Média de ${mediaAlvo} chutes no alvo.`);
+            else if (mediaAlvo < 3) pontosFracos.push(`<b>Pontaria Baixa:</b> Apenas ${mediaAlvo} chutes no alvo por jogo.`);
+
+            const cardTime = document.createElement("div");
+            cardTime.style.cssText = "background: #0f172a; padding: 15px; border-radius: 10px; border: 1px solid #334155;";
+
+            cardTime.innerHTML = `
+                <h3 style="color: #3b82f6; margin-bottom: 6px; border-bottom: 1px solid #1e293b; padding-bottom: 8px;">${time}</h3>
+                <p style="font-size:0.8rem; color:#94a3b8; margin-bottom: 12px;">Com base em ${qtd} registro(s)</p>
+
+                <div style="margin-bottom: 12px;">
+                    <strong style="color: #22c55e; font-size: 0.85rem; display: block; margin-bottom: 5px;">🟢 Destaques Positivos (Pontos Fortes):</strong>
+                    <ul style="padding-left: 18px; font-size: 0.85rem; color: #e2e8f0; line-height: 1.4;">
+                        ${pontosFortes.length > 0 ? pontosFortes.map(p => `<li>${p}</li>`).join('') : '<li>Sem destaques positivos destacados.</li>'}
+                    </ul>
+                </div>
+
+                <div>
+                    <strong style="color: #ef4444; font-size: 0.85rem; display: block; margin-bottom: 5px;">🔴 Destaques Negativos (Pontos Fracos):</strong>
+                    <ul style="padding-left: 18px; font-size: 0.85rem; color: #e2e8f0; line-height: 1.4;">
+                        ${pontosFracos.length > 0 ? pontosFracos.map(p => `<li>${p}</li>`).join('') : '<li>Métricas sem pontos fracos críticos.</li>'}
+                    </ul>
+                </div>
+            `;
+
+            container.appendChild(cardTime);
+        });
+    }
+
+    // Inicializar na abertura da página
     carregarDashboardRanking();
 </script>
 
