@@ -189,59 +189,69 @@ function adicionarHistorico(item) {
 // IQP (Versão Beta)
 // ===============================
 
-function calcularIQP(dados) {
-
+export function calcularIQP(dados) {
     let score = 0;
 
     // Necessidade Tática
-
     if (dados.precisaVencer) score += 20;
 
     // Posse
-
     if (dados.posse >= 65) score += 10;
     else if (dados.posse >= 55) score += 6;
 
     // Ataques perigosos
-
     if (dados.ataquesPerigosos >= 50) score += 20;
     else if (dados.ataquesPerigosos >= 35) score += 14;
     else if (dados.ataquesPerigosos >= 20) score += 8;
 
     // Finalizações
-
     if (dados.finalizacoes >= 12) score += 15;
     else if (dados.finalizacoes >= 8) score += 10;
     else if (dados.finalizacoes >= 5) score += 5;
 
     // Finalizações no alvo
-
     if (dados.noAlvo >= 6) score += 20;
     else if (dados.noAlvo >= 4) score += 14;
     else if (dados.noAlvo >= 2) score += 8;
 
     // Odd
-
     if (dados.odd >= 1.60 && dados.odd <= 2.20) score += 5;
 
     // Evento extraordinário
-
     if (dados.expulsaoAdversario) score += 10;
 
-    // Penalização: pressão falsa
-
-    if (dados.posse >= 65 && dados.noAlvo === 0) {
-
+    // Penalização: pressão falsa (posse estéril)
+    if (dados.posse >= 65 && Number(dados.noAlvo) === 0) {
         score -= 20;
-
     }
 
-    // Limites
+    // Trava entre 0 e 100
+    const iqp = Math.max(0, Math.min(100, score));
 
-    score = Math.max(0, Math.min(100, score));
+    // 1. Classificação por Nível
+    let classificacao = "NÃO ENTRAR";
+    if (iqp >= 85) classificacao = "PREMIUM";
+    else if (iqp >= 70) classificacao = "FORTE";
+    else if (iqp >= 55) classificacao = "MODERADA";
 
-    return score;
+    // 2. Sugestão Automática do Mercado Recomendado
+    let apostaSugerida = "⚪ AGUARDAR / SEM ENTRADA";
 
+    if (iqp >= 70) {
+        if (Number(dados.noAlvo) >= 4 || Number(dados.finalizacoes) >= 10) {
+            apostaSugerida = "⚽ OVER GOLS LIMITE";
+        } else if (Number(dados.ataquesPerigosos) >= 45 || Number(dados.escanteios) >= 6) {
+            apostaSugerida = "🚩 OVER ESCANTEIOS LIMITE";
+        } else {
+            apostaSugerida = "⚽/🚩 OVER GOLS OU CANTOS";
+        }
+    }
+
+    return {
+        iqp,
+        classificacao,
+        apostaSugerida
+    };
 }
 
 // ===============================
@@ -295,5 +305,7 @@ window.RaceInteligente = {
     atualizarPainelLive
 
 };
+
+
 
 console.log("Race Inteligente LIVE inicializado.");
