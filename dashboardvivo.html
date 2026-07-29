@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Race Inteligente LIVE - Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-yellow: #eab308;
+            --accent-red: #ef4444;
+            --border-color: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .nav-btn {
+            background-color: var(--accent-blue);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 25px;
+        }
+
+        .grid-proximos {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: rgba(15, 23, 42, 0.6);
+            color: var(--text-muted);
+        }
+
+        .badge-iqp {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>📊 Dashboard & Previsões</h1>
+        <a href="index.html" class="nav-btn">⬅️ Voltar para Calculadora</a>
+    </header>
+
+    <main>
+        <!-- SEÇÃO: PRÓXIMOS JOGOS (PREMIER LEAGUE + FIRESTORE) -->
+        <section class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <h2>🎯 Oportunidades Próximas - Premier League</h2>
+                <span id="statusCarregamentoPL" style="font-size: 0.85rem; color: var(--accent-blue);">Analisando cruzamento de dados...</span>
+            </div>
+            <p style="color: var(--text-muted); margin-top: 5px; font-size: 0.85rem;">
+                Análise preditiva baseada nas médias dos times gravadas no seu histórico.
+            </p>
+
+            <div id="containerProximosJogosPL" class="grid-proximos">
+                <!-- Cards renderizados dinamicamente pelo JS -->
+            </div>
+        </section>
+
+        <!-- SEÇÃO: HISTÓRICO DE ANÁLISES SALVAS -->
+        <section class="card">
+            <h2>📜 Histórico de Jogos Registrados</h2>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Partida</th>
+                            <th>Posse</th>
+                            <th>Att Perig.</th>
+                            <th>Chutes/Alvo</th>
+                            <th>IQP</th>
+                            <th>Entrada Sugerida</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaHistorico">
+                        <!-- Linhas da tabela preenchidas pelo JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script type="module">
+    import { db } from './js/firebase-config.js';
+    import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+
+    // Simulação da lista de jogos da rodada (Pronta para ligar no fetch da API)
+    const proximosJogosPL = [
+        { mandante: "Arsenal", visitante: "Everton", data: "Hoje" },
+        { mandante: "Manchester City", visitante: "Wolves", data: "Amanhã" },
+        { mandante: "Liverpool", visitante: "Bournemouth", data: "Amanhã" },
+        { mandante: "Chelsea", visitante: "Fulham", data: "Domingo" }
+    ];
+
+    async function carregarDashboard() {
+        const statusText = document.getElementById("statusCarregamentoPL");
+        const containerProximos = document.getElementById("containerProximosJogosPL");
+        const tabela = document.getElementById("tabelaHistorico");
+
+        try {
+            // 1. Busca dados do Firestore
+            const querySnapshot = await getDocs(collection(db, "ri_historico"));
+            const historico = [];
+            tabela.innerHTML = "";
+
+            querySnapshot.forEach(doc => {
+                const item = doc.data();
+                historico.push(item);
+
+                // Preenche a tabela do histórico
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td><strong>${item.jogo}</strong></td>
+                    <td>${item.posse}%</td>
+                    <td>${item.ataquesPerigosos}</td>
+                    <td>${item.finalizacoes} / ${item.noAlvo}</td>
+                    <td><span class="badge-iqp" style="background:#3b82f620; color:#3b82f6; border:1px solid #3b82f6;">${item.iqp} pts</span></td>
+                    <td style="color:#22c55e; font-weight:bold;">${item.apostaSugerida}</td>
+                `;
+                tabela.appendChild(tr);
+            });
+
+            // 2. Processa a Análise Preditiva para cada jogo da rodada
+            containerProximos.innerHTML = "";
+            proximosJogosPL.forEach(jogo => {
+                const historicoMandante = historico.filter(h => h.jogo && h.jogo.toLowerCase().includes(jogo.mandante.toLowerCase()));
+                
+                let mediaIQP = 0;
+                let mediaCantos = 0;
+
+                if (historicoMandante.length > 0) {
+                    const somaIQP = historicoMandante.reduce((acc, curr) => acc + Number(curr.iqp || 0), 0);
+                    const somaCantos = historicoMandante.reduce((acc, curr) => acc + Number(curr.escanteios || 0), 0);
+                    mediaIQP = (somaIQP / historicoMandante.length).toFixed(0);
+                    mediaCantos = (somaCantos / historicoMandante.length).toFixed(1);
+                }
+
+                let recomendacao = "⚪ AGUARDAR AO VIVO (Poucos Dados)";
+                let badgeCor = "#64748b";
+
+                if (historicoMandante.length > 0) {
+                    if (mediaIQP >= 75) {
+                        recomendacao = `🚩 FOCO EM RACE CANTOS DO ${jogo.mandante.toUpperCase()}`;
+                        badgeCor = "#22c55e";
+                    } else if (mediaIQP >= 60) {
+                        recomendacao = "⚽ FOCO EM OVER GOLS LIMITE";
+                        badgeCor = "#3b82f6";
+                    } else {
+                        recomendacao = "⚠️ EVITAR ENTRADAS PRE-JOGO";
+                        badgeCor = "#ef4444";
+                    }
+                }
+
+                const card = document.createElement("div");
+                card.style.cssText = "background: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #334155;";
+                card.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; margin-bottom: 8px;">
+                        <span style="font-size: 0.75rem; color: #94a3b8; font-weight: bold;">PREMIER LEAGUE</span>
+                        <span style="font-size: 0.75rem; color: #f59e0b;">${jogo.data}</span>
+                    </div>
+                    <h3 style="font-size: 1rem; margin-bottom: 10px;">${jogo.mandante} x ${jogo.visitante}</h3>
+                    <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 10px;">Amostra: ${historicoMandante.length} jogo(s) | IQP Médio: ${mediaIQP} pts</p>
+                    <div style="background: ${badgeCor}20; border: 1px solid ${badgeCor}; color: ${badgeCor}; padding: 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; text-align: center;">
+                        ${recomendacao}
+                    </div>
+                `;
+                containerProximos.appendChild(card);
+            });
+
+            statusText.textContent = "Atualizado em tempo real";
+            statusText.style.color = "#22c55e";
+
+        } catch (e) {
+            console.error(e);
+            statusText.textContent = "Erro ao carregar do Firestore.";
+            statusText.style.color = "#ef4444";
+        }
+    }
+
+    window.addEventListener("DOMContentLoaded", carregarDashboard);
+</script>
+
+</body>
+</html>

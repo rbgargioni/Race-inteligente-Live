@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Race Inteligente LIVE - Calculadora IQP</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-yellow: #eab308;
+            --accent-red: #ef4444;
+            --border-color: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            color: var(--accent-blue);
+        }
+
+        .nav-btn {
+            background-color: var(--accent-blue);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: 0.2s;
+        }
+
+        .nav-btn:hover {
+            opacity: 0.9;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        .grid-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        input[type="text"], input[type="number"], select {
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            color: white;
+            padding: 10px;
+            border-radius: 6px;
+            outline: none;
+        }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent-blue);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 25px;
+        }
+
+        .btn-submit {
+            background-color: var(--accent-green);
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: 0.2s;
+        }
+
+        .btn-submit:hover {
+            opacity: 0.9;
+        }
+
+        .result-box {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: rgba(59, 130, 246, 0.1);
+            border: 1px solid var(--accent-blue);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>⚡ Race Inteligente LIVE</h1>
+        <a href="dashboard.html" class="nav-btn">Ir para o Dashboard 📊</a>
+    </header>
+
+    <main>
+        <section class="card">
+            <h2>Análise de Pressão ao Vivo (IQP)</h2>
+            <form id="formCalculoIQP">
+                <div class="grid-form">
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label for="nomeJogo">Confronto (ex: Arsenal x Everton)</label>
+                        <input type="text" id="nomeJogo" placeholder="Time A x Time B" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="posse">Posse de Bola (%)</label>
+                        <input type="number" id="posse" min="0" max="100" placeholder="ex: 68" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="ataquesPerigosos">Ataques Perigosos</label>
+                        <input type="number" id="ataquesPerigosos" min="0" placeholder="ex: 52" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="finalizacoes">Finalizações Totais</label>
+                        <input type="number" id="finalizacoes" min="0" placeholder="ex: 11" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="noAlvo">Chutes no Alvo</label>
+                        <input type="number" id="noAlvo" min="0" placeholder="ex: 5" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="escanteios">Escanteios Totais</label>
+                        <input type="number" id="escanteios" min="0" placeholder="ex: 7" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="odd">Odd Atual (ex: 1.85)</label>
+                        <input type="number" step="0.01" id="odd" placeholder="ex: 1.85" required>
+                    </div>
+                    <div class="form-group checkbox-group">
+                        <input type="checkbox" id="precisaVencer">
+                        <label for="precisaVencer">Precisa Vencer?</label>
+                    </div>
+                    <div class="form-group checkbox-group">
+                        <input type="checkbox" id="expulsaoAdversario">
+                        <label for="expulsaoAdversario">Adversário Expulso?</label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit">Calcular IQP & Registrar</button>
+            </form>
+
+            <div id="painelResultado" class="result-box">
+                <h3 id="resIQP" style="font-size: 1.4rem; color: #fff;">IQP: 0 pts</h3>
+                <p id="resCenario" style="margin-top: 5px; font-weight: bold; color: var(--accent-yellow);"></p>
+                <p id="resAposta" style="margin-top: 5px; font-size: 1.1rem; color: var(--accent-green); font-weight: bold;"></p>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script type="module">
+    import { db } from './js/firebase-config.js';
+    import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+    import { calcularIQP } from './js/app.js';
+
+    document.getElementById("formCalculoIQP").addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const dados = {
+            jogo: document.getElementById("nomeJogo").value,
+            posse: Number(document.getElementById("posse").value),
+            ataquesPerigosos: Number(document.getElementById("ataquesPerigosos").value),
+            finalizacoes: Number(document.getElementById("finalizacoes").value),
+            noAlvo: Number(document.getElementById("noAlvo").value),
+            escanteios: Number(document.getElementById("escanteios").value),
+            odd: Number(document.getElementById("odd").value),
+            precisaVencer: document.getElementById("precisaVencer").checked,
+            expulsaoAdversario: document.getElementById("expulsaoAdversario").checked,
+            dataRegistro: new Date().toISOString()
+        };
+
+        const analise = calcularIQP(dados);
+
+        // Exibe no painel
+        document.getElementById("painelResultado").style.display = "block";
+        document.getElementById("resIQP").textContent = `Score IQP: ${analise.iqp} pts (${analise.classificacao})`;
+        document.getElementById("resCenario").textContent = analise.cenarioJogo;
+        document.getElementById("resAposta").textContent = `Sugestão: ${analise.apostaSugerida}`;
+
+        // Salva no Firestore
+        try {
+            await addDoc(collection(db, "ri_historico"), {
+                ...dados,
+                iqp: analise.iqp,
+                classificacao: analise.classificacao,
+                apostaSugerida: analise.apostaSugerida,
+                cenarioJogo: analise.cenarioJogo
+            });
+            alert("Partida salva com sucesso no histórico!");
+        } catch (error) {
+            console.error("Erro ao salvar no Firestore:", error);
+        }
+    });
+</script>
+
+</body>
+</html>
