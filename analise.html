@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova Análise LIVE - Race Inteligente</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Chart.js para os gráficos coloridos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<header class="topo">
+    <div class="logo-area">
+        <div class="logo-circle">RI</div>
+        <div>
+            <h1>Nova Análise (LIVE)</h1>
+            <p>Monitore os indicadores aos 65' e calcule o IQP</p>
+        </div>
+    </div>
+</header>
+
+<main class="container">
+
+    <!-- FORMULÁRIO DE ENTRADA DE DADOS -->
+    <section class="card">
+        <h2>Dados da Partida</h2>
+        <form id="formAnalise" style="display: grid; gap: 15px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+            
+            <div style="grid-column: 1 / -1;">
+                <label style="display:block; margin-bottom:5px; color:#94a3b8;">Confronto (Times)</label>
+                <input type="text" id="inputJogo" placeholder="Ex: Real Madrid x Getafe" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #334155; background:#0f172a; color:#fff;">
+            </div>
+
+            <div>
+                <label style="display:block; margin-bottom:5px; color:#94a3b8;">Minuto da Análise</label>
+                <input type="number" id="inputMinuto" value="65" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #334155; background:#0f172a; color:#fff;">
+            </div>
+
+            <div>
+                <label style="display:block; margin-bottom:5px; color:#94a3b8;">Odd Atual Race</label>
+                <input type="number" step="0.01" id="inputOdd" placeholder="Ex: 1.85" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #334155; background:#0f172a; color:#fff;">
+            </div>
+
+            <div>
+                <label style="display:block; margin-bottom:5px; color:#94a3b8;">Posse de Bola (%)</label>
+                <input type="number" id="inputPosse" placeholder="65" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #334155; background:#0f172a; color:#fff;">
+            </div>
+
+            <div>
+                <label style="display:block; margin-bottom:5px; color:#94a3b8;">Ataques Perigosos</label>
+                <input type="number" id="inputAtaquesPerigosos" placeholder="45" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #334155; background:#0f172a; color:#fff;">
+            </div>
+
+            <div>
+                <label style="display:block; margin-bottom:5px; color:#94a3b8;">Finalizações Totais</label>
+                <input type="number" id="inputFinalizacoes" placeholder="12" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #334155; background:#0f172a; color:#fff;">
+            </div>
+
+            <div>
+                <label style="display:block; margin-bottom:5px; color:#94a3b8;">Chutes no Alvo</label>
+                <input type="number" id="inputNoAlvo" placeholder="5" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #334155; background:#0f172a; color:#fff;">
+            </div>
+
+            <div>
+                <label style="display:block; margin-bottom:5px; color:#94a3b8;">Escanteios</label>
+                <input type="number" id="inputEscanteios" placeholder="7" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #334155; background:#0f172a; color:#fff;">
+            </div>
+
+            <div style="display:flex; align-items:center; gap:10px; margin-top:15px;">
+                <input type="checkbox" id="checkPrecisaVencer" style="width:18px; height:18px;">
+                <label for="checkPrecisaVencer" style="color:#e2e8f0;">Favorito precisa do resultado?</label>
+            </div>
+
+            <div style="display:flex; align-items:center; gap:10px; margin-top:15px;">
+                <input type="checkbox" id="checkExpulsao" style="width:18px; height:18px;">
+                <label for="checkExpulsao" style="color:#e2e8f0;">Adversário com cartão vermelho?</label>
+            </div>
+
+            <div style="grid-column: 1 / -1; margin-top: 10px;">
+                <button type="button" id="btnCalcular" class="btn-success" style="width:100%; padding:12px; font-weight:bold; cursor:pointer;">
+                    Calcular IQP & Gerar Gráficos
+                </button>
+            </div>
+        </form>
+    </section>
+
+    <!-- PAINEL DE RESULTADOS E GRÁFICOS COLORIDOS -->
+    <section class="card" id="secaoResultado" style="display:none;">
+        <h2>Resultado do IQP LIVE</h2>
+
+        <div class="painel-grid" style="margin-bottom: 25px;">
+            <div class="painel-item">
+                <span>Classificação</span>
+                <strong id="resClassificacao">--</strong>
+            </div>
+            <div class="painel-item">
+                <span>IQP Calculado</span>
+                <strong id="resIQP">0</strong>
+            </div>
+        </div>
+
+        <!-- ÁREA DOS GRÁFICOS -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 20px;">
+            
+            <!-- Gráfico 1: Barra de Pressão/IQP -->
+            <div style="background: #0f172a; padding: 15px; border-radius: 12px; border: 1px solid #334155;">
+                <h3 style="font-size: 0.95rem; color: #94a3b8; margin-bottom: 10px; text-align: center;">Índice de Qualidade (IQP)</h3>
+                <div style="height: 200px;">
+                    <canvas id="chartIQP"></canvas>
+                </div>
+            </div>
+
+            <!-- Gráfico 2: Radar de Métricas de Ataque -->
+            <div style="background: #0f172a; padding: 15px; border-radius: 12px; border: 1px solid #334155;">
+                <h3 style="font-size: 0.95rem; color: #94a3b8; margin-bottom: 10px; text-align: center;">Volume de Pressão LIVE</h3>
+                <div style="height: 200px;">
+                    <canvas id="chartMetricas"></canvas>
+                </div>
+            </div>
+
+        </div>
+
+        <button id="btnSalvarFirestore" class="btn" style="width:100%; margin-top:25px; padding:12px; font-weight:bold; cursor:pointer;">
+            Salvar Análise no Banco de Dados (Firestore)
+        </button>
+    </section>
+
+    <a href="index.html" class="btn" style="margin-top:20px; display:inline-block;">Voltar ao Início</a>
+
+</main>
+
+<footer class="rodape" style="text-align: center; padding: 20px; color: #64748b; font-size: 0.85rem;">
+    Race Inteligente LIVE Cloud v0.1 Alpha
+</footer>
+
+<!-- Integração Script & Firestore -->
+<script type="module">
+    import { db } from './js/firebase-config.js';
+    import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+
+    let chartIQPInstance = null;
+    let chartMetricasInstance = null;
+    let dadosAnaliseAtual = null;
+
+    document.getElementById("btnCalcular").addEventListener("click", () => {
+        const jogo = document.getElementById("inputJogo").value;
+        const minuto = document.getElementById("inputMinuto").value;
+        const odd = document.getElementById("inputOdd").value;
+        const posse = Number(document.getElementById("inputPosse").value) || 0;
+        const ataquesP = Number(document.getElementById("inputAtaquesPerigosos").value) || 0;
+        const finalizacoes = Number(document.getElementById("inputFinalizacoes").value) || 0;
+        const noAlvo = Number(document.getElementById("inputNoAlvo").value) || 0;
+        const escanteios = Number(document.getElementById("inputEscanteios").value) || 0;
+        const precisaVencer = document.getElementById("checkPrecisaVencer").checked;
+        const expulsao = document.getElementById("checkExpulsao").checked;
+
+        if (!jogo || !odd) {
+            alert("Por favor, preencha o nome do confronto e a Odd.");
+            return;
+        }
+
+        // Cálculo Simples de IQP para Exemplo
+        let iqp = (posse * 0.3) + (ataquesP * 0.5) + (finalizacoes * 2) + (noAlvo * 4) + (escanteios * 3);
+        if (precisaVencer) iqp += 10;
+        if (expulsao) iqp += 15;
+
+        iqp = Math.min(Math.round(iqp), 100);
+
+        let classificacao = "NÃO ENTRAR";
+        let corStatus = "#ef4444"; // Vermelho
+
+        if (iqp >= 85) {
+            classificacao = "PREMIUM";
+            corStatus = "#22c55e"; // Verde
+        } else if (iqp >= 70) {
+            classificacao = "FORTE";
+            corStatus = "#3b82f6"; // Azul
+        } else if (iqp >= 55) {
+            classificacao = "MODERADA";
+            corStatus = "#eab308"; // Amarelo
+        }
+
+        // Exibir Seção
+        document.getElementById("secaoResultado").style.display = "block";
+        const elClassificacao = document.getElementById("resClassificacao");
+        elClassificacao.textContent = classificacao;
+        elClassificacao.style.color = corStatus;
+        document.getElementById("resIQP").textContent = iqp;
+
+        // Objeto da análise
+        dadosAnaliseAtual = {
+            jogo,
+            data: new Date().toLocaleDateString("pt-BR"),
+            minuto,
+            odd,
+            posse,
+            ataquesPerigosos: ataquesP,
+            finalizacoes,
+            noAlvo,
+            escanteios,
+            precisaVencer,
+            expulsaoAdversario: expulsao,
+            iqp,
+            classificacao,
+            criadoEm: new Date()
+        };
+
+        // Renderizar Gráficos Coloridos
+        renderizarGraficos(iqp, corStatus, posse, ataquesP, finalizacoes, noAlvo, escanteios);
+    });
+
+    function renderizarGraficos(iqp, cor, posse, ataquesP, fin, alvo, esc) {
+        // Destrói instâncias anteriores se existirem
+        if (chartIQPInstance) chartIQPInstance.destroy();
+        if (chartMetricasInstance) chartMetricasInstance.destroy();
+
+        // Gráfico 1: Gauge/Barra Vertical IQP
+        const ctxIQP = document.getElementById('chartIQP').getContext('2d');
+        chartIQPInstance = new Chart(ctxIQP, {
+            type: 'bar',
+            data: {
+                labels: ['IQP'],
+                datasets: [{
+                    label: 'Pontuação',
+                    data: [iqp],
+                    backgroundColor: cor,
+                    borderRadius: 8,
+                    barThickness: 40
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, max: 100, grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+                    x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        // Gráfico 2: Barra Horizontal com Cores Vibrantes
+        const ctxMetricas = document.getElementById('chartMetricas').getContext('2d');
+        chartMetricasInstance = new Chart(ctxMetricas, {
+            type: 'bar',
+            data: {
+                labels: ['Posse %', 'Atq. Perigosos', 'Finalizações', 'No Alvo', 'Escanteios'],
+                datasets: [{
+                    label: 'Métricas',
+                    data: [posse, ataquesP, fin, alvo, esc],
+                    backgroundColor: [
+                        '#3b82f6', // Azul
+                        '#a855f7', // Roxo
+                        '#ec4899', // Rosa
+                        '#22c55e', // Verde
+                        '#eab308'  // Amarelo
+                    ],
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+                    y: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+    }
+
+    // Salvar no Firestore
+    document.getElementById("btnSalvarFirestore").addEventListener("click", async () => {
+        if (!dadosAnaliseAtual) return;
+
+        const btn = document.getElementById("btnSalvarFirestore");
+        btn.disabled = true;
+        btn.textContent = "Salvando no Firestore...";
+
+        try {
+            await addDoc(collection(db, "ri_historico"), dadosAnaliseAtual);
+            alert("Análise salva com sucesso na nuvem!");
+            window.location.href = "index.html"; // Redireciona para atualizar o painel
+        } catch (e) {
+            console.error(e);
+            alert("Erro ao salvar análise: " + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = "Salvar Análise no Banco de Dados (Firestore)";
+        }
+    });
+</script>
+
+</body>
+</html>

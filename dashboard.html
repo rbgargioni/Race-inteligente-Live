@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Race Inteligente LIVE</title>
+    <title>Dashboard & Ranking LIVE - Race Inteligente</title>
     <link rel="stylesheet" href="css/style.css">
+    <!-- Chart.js para os gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -12,275 +14,229 @@
     <div class="logo-area">
         <div class="logo-circle">RI</div>
         <div>
-            <h1>Dashboard</h1>
-            <p>Painel estatístico do Race Inteligente LIVE</p>
+            <h1>Dashboard & Ranking de IQP</h1>
+            <p>Análise gráfica dos últimos 30 jogos cadastrados no Firestore</p>
         </div>
     </div>
 </header>
 
 <main class="container">
 
-    <!-- Indicadores principais -->
-
+    <!-- MÉTRICAS GERAIS DOS ÚLTIMOS 30 JOGOS -->
     <section class="card">
-
-        <h2>Indicadores Gerais</h2>
+        <h2>Visão Geral (Amostra de até 30 jogos)</h2>
 
         <div class="painel-grid">
-
             <div class="painel-item">
-                <span>Total de Análises</span>
+                <span>Jogos Analisados</span>
                 <strong id="dashTotal">0</strong>
             </div>
 
             <div class="painel-item">
-                <span>IQP Médio</span>
-                <strong id="dashIQP">0</strong>
+                <span>Média de IQP</span>
+                <strong id="dashMediaIQP">0</strong>
+            </div>
+
+            <div class="painel-item">
+                <span>Taxa Premium + Forte</span>
+                <strong id="dashTaxaElite">0%</strong>
             </div>
 
             <div class="painel-item">
                 <span>Maior IQP</span>
-                <strong id="dashMaior">0</strong>
+                <strong id="dashMaiorIQP">0</strong>
             </div>
-
-            <div class="painel-item">
-                <span>Menor IQP</span>
-                <strong id="dashMenor">0</strong>
-            </div>
-
         </div>
-
     </section>
 
-    <!-- Distribuição -->
-
+    <!-- GRÁFICO DE RANKING -->
     <section class="card">
+        <h2>Ranking dos Maiores IQPs (Top 30)</h2>
+        <p style="color: #94a3b8; margin-bottom: 20px; font-size: 0.9rem;">
+            Os jogos abaixo estão ordenados do maior para o menor IQP. As cores indicam a classificação da entrada (Verde = Premium, Azul = Forte, Amarelo = Moderada, Vermelho = Não Entrar).
+        </p>
 
-        <h2>Distribuição das Entradas</h2>
-
-        <div class="painel-grid">
-
-            <div class="painel-item">
-                <span>PREMIUM</span>
-                <strong id="dashPremium">0</strong>
-            </div>
-
-            <div class="painel-item">
-                <span>FORTE</span>
-                <strong id="dashForte">0</strong>
-            </div>
-
-            <div class="painel-item">
-                <span>MODERADA</span>
-                <strong id="dashModerada">0</strong>
-            </div>
-
-            <div class="painel-item">
-                <span>NÃO ENTRAR</span>
-                <strong id="dashNao">0</strong>
-            </div>
-
+        <div style="background: #0f172a; padding: 15px; border-radius: 12px; border: 1px solid #334155; position: relative; min-height: 400px;">
+            <canvas id="chartRanking"></canvas>
         </div>
-
     </section>
 
-    <!-- Gráfico simples -->
-
+    <!-- LISTA DE DETALHES DO RANKING -->
     <section class="card">
-
-        <h2>Evolução do IQP</h2>
-
-        <canvas id="graficoIQP" height="220"></canvas>
-
+        <h2>Tabela do Ranking de Pressão</h2>
+        
+        <div style="overflow-x: auto; margin-top: 15px;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; color: #e2e8f0; font-size: 0.9rem;">
+                <thead>
+                    <tr style="border-bottom: 2px solid #334155; color: #94a3b8;">
+                        <th style="padding: 10px;">Pos.</th>
+                        <th style="padding: 10px;">Confronto</th>
+                        <th style="padding: 10px;">IQP</th>
+                        <th style="padding: 10px;">Status</th>
+                        <th style="padding: 10px;">Data</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaRanking">
+                    <tr>
+                        <td colspan="5" style="padding: 15px; text-align: center; color: #94a3b8;">Carregando ranking do banco de dados...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </section>
 
-    <!-- Últimas análises -->
-
-    <section class="card">
-
-        <h2>Últimas Análises</h2>
-
-        <div id="ultimasAnalises"></div>
-
-    </section>
-
-    <!-- Próximas funcionalidades -->
-
-    <section class="card">
-
-        <h2>Próximas Funcionalidades</h2>
-
-        <ul style="color:#94a3b8; line-height:1.8;">
-            <li>Taxa de acerto por classificação</li>
-            <li>ROI por faixa de odd</li>
-            <li>Desempenho por liga</li>
-            <li>Impacto das expulsões</li>
-            <li>IQP por campeonato</li>
-            <li>Radar de entradas do dia</li>
-            <li>Integração com Firestore</li>
-            <li>Notificações aos 65 minutos</li>
-        </ul>
-
-    </section>
-
-    <a href="index.html" class="btn">Voltar ao Início</a>
+    <a href="index.html" class="btn" style="margin-top:20px; display:inline-block;">Voltar ao Início</a>
 
 </main>
 
-<footer class="rodape">
+<footer class="rodape" style="text-align: center; padding: 20px; color: #64748b; font-size: 0.85rem;">
     Race Inteligente LIVE Cloud v0.1 Alpha
 </footer>
 
-<script src="js/app.js"></script>
+<!-- Script de Integração com Firestore e Renderização do Gráfico -->
+<script type="module">
+    import { db } from './js/firebase-config.js';
+    import { 
+        collection, 
+        getDocs, 
+        query, 
+        limit 
+    } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
-<script>
+    let chartRankingInstance = null;
 
-function carregarDashboard() {
+    async function carregarDashboardRanking() {
+        const tabela = document.getElementById("tabelaRanking");
 
-    const historico = RaceInteligente.obterHistorico();
+        try {
+            // Busca até 30 registros da coleção
+            const q = query(collection(db, "ri_historico"), limit(30));
+            const querySnapshot = await getDocs(q);
 
-    // ==========================
-    // Indicadores
-    // ==========================
+            if (querySnapshot.empty) {
+                tabela.innerHTML = '<tr><td colspan="5" style="padding:15px; text-align:center; color:#94a3b8;">Nenhum jogo registrado para exibir o ranking.</td></tr>';
+                return;
+            }
 
-    const total = historico.length;
+            const dados = [];
+            querySnapshot.forEach(doc => {
+                dados.push(doc.data());
+            });
 
-    document.getElementById("dashTotal").textContent = total;
+            // Ordena os jogos do MAIOR IQP para o MENOR
+            dados.sort((a, b) => Number(b.iqp) - Number(a.iqp));
 
-    if (total === 0) {
+            // Atualiza os Cards Superiores de Resumo
+            const total = dados.length;
+            const somaIQP = dados.reduce((acc, curr) => acc + Number(curr.iqp || 0), 0);
+            const mediaIQP = (somaIQP / total).toFixed(1);
+            const maiorIQP = dados[0].iqp || 0;
 
-        document.getElementById("dashIQP").textContent = "0";
-        document.getElementById("dashMaior").textContent = "0";
-        document.getElementById("dashMenor").textContent = "0";
+            const eliteCount = dados.filter(d => d.classificacao === "PREMIUM" || d.classificacao === "FORTE").length;
+            const taxaElite = ((eliteCount / total) * 100).toFixed(0);
 
-        document.getElementById("dashPremium").textContent = "0";
-        document.getElementById("dashForte").textContent = "0";
-        document.getElementById("dashModerada").textContent = "0";
-        document.getElementById("dashNao").textContent = "0";
+            document.getElementById("dashTotal").textContent = total;
+            document.getElementById("dashMediaIQP").textContent = mediaIQP;
+            document.getElementById("dashTaxaElite").textContent = taxaElite + "%";
+            document.getElementById("dashMaiorIQP").textContent = maiorIQP;
 
-        document.getElementById("ultimasAnalises").innerHTML =
-            "<p style='color:#94a3b8'>Nenhuma análise registrada.</p>";
+            // Prepara arrays para o Gráfico
+            const rotulosJogos = [];
+            const valoresIQP = [];
+            const coresBarras = [];
 
-        desenharGrafico([]);
-        return;
+            tabela.innerHTML = "";
 
-    }
+            dados.forEach((item, index) => {
+                rotulosJogos.push(item.jogo || `Jogo #${index + 1}`);
+                valoresIQP.push(item.iqp);
 
-    const iqps = historico.map(i => Number(i.iqp));
+                // Define as cores dinâmicas
+                let cor = "#ef4444"; // Vermelho (Não Entrar)
+                let badgeClass = "status-nao";
 
-    const media = iqps.reduce((a,b) => a+b,0) / iqps.length;
+                if (item.classificacao === "PREMIUM") {
+                    cor = "#22c55e"; // Verde
+                    badgeClass = "status-premium";
+                } else if (item.classificacao === "FORTE") {
+                    cor = "#3b82f6"; // Azul
+                    badgeClass = "status-forte";
+                } else if (item.classificacao === "MODERADA") {
+                    cor = "#eab308"; // Amarelo
+                    badgeClass = "status-moderada";
+                }
 
-    document.getElementById("dashIQP").textContent = media.toFixed(1);
-    document.getElementById("dashMaior").textContent = Math.max(...iqps);
-    document.getElementById("dashMenor").textContent = Math.min(...iqps);
+                coresBarras.push(cor);
 
-    document.getElementById("dashPremium").textContent =
-        historico.filter(i => i.classificacao === "PREMIUM").length;
+                // Preenche a tabela detalhada
+                const tr = document.createElement("tr");
+                tr.style.borderBottom = "1px solid #1e293b";
+                tr.innerHTML = `
+                    <td style="padding:12px 10px; font-weight:bold; color:#94a3b8;">#${index + 1}</td>
+                    <td style="padding:12px 10px; font-weight:bold;">${item.jogo}</td>
+                    <td style="padding:12px 10px; color:#f8fafc; font-weight:bold;">${item.iqp}</td>
+                    <td style="padding:12px 10px;"><span class="status ${badgeClass}">${item.classificacao}</span></td>
+                    <td style="padding:12px 10px; color:#64748b;">${item.data || '--'}</td>
+                `;
+                tabela.appendChild(tr);
+            });
 
-    document.getElementById("dashForte").textContent =
-        historico.filter(i => i.classificacao === "FORTE").length;
+            // Renderiza o Gráfico de Ranking
+            renderizarGraficoRanking(rotulosJogos, valoresIQP, coresBarras);
 
-    document.getElementById("dashModerada").textContent =
-        historico.filter(i => i.classificacao === "MODERADA").length;
-
-    document.getElementById("dashNao").textContent =
-        historico.filter(i => i.classificacao === "NÃO ENTRAR").length;
-
-    // ==========================
-    // Últimas análises
-    // ==========================
-
-    const ultimas = historico.slice(0,5);
-
-    const container = document.getElementById("ultimasAnalises");
-    container.innerHTML = "";
-
-    ultimas.forEach(item => {
-
-        const div = document.createElement("div");
-        div.className = "card";
-
-        div.innerHTML = `
-
-            <strong>${item.jogo}</strong><br>
-
-            IQP: ${item.iqp} | ${item.classificacao} | ${item.data}
-
-        `;
-
-        container.appendChild(div);
-
-    });
-
-    // ==========================
-    // Gráfico
-    // ==========================
-
-    desenharGrafico(iqps);
-
-}
-
-function desenharGrafico(valores) {
-
-    const canvas = document.getElementById("graficoIQP");
-    const ctx = canvas.getContext("2d");
-
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-
-    if (valores.length === 0) {
-
-        ctx.fillStyle = "#94a3b8";
-        ctx.font = "16px sans-serif";
-        ctx.fillText("Sem dados para exibir", 20, 40);
-
-        return;
-
-    }
-
-    const padding = 30;
-    const w = canvas.width;
-    const h = canvas.height;
-
-    const max = 100;
-    const min = 0;
-
-    ctx.strokeStyle = "#334155";
-    ctx.lineWidth = 1;
-
-    ctx.beginPath();
-    ctx.moveTo(padding, padding);
-    ctx.lineTo(padding, h-padding);
-    ctx.lineTo(w-padding, h-padding);
-    ctx.stroke();
-
-    ctx.strokeStyle = "#2563eb";
-    ctx.lineWidth = 3;
-
-    ctx.beginPath();
-
-    valores.forEach((v, i) => {
-
-        const x = padding + (i * (w - padding*2) / Math.max(valores.length-1,1));
-        const y = h - padding - ((v-min)/(max-min)) * (h-padding*2);
-
-        if (i === 0) {
-
-            ctx.moveTo(x,y);
-
-        } else {
-
-            ctx.lineTo(x,y);
-
+        } catch (error) {
+            console.error("Erro ao carregar ranking:", error);
+            tabela.innerHTML = '<tr><td colspan="5" style="padding:15px; text-align:center; color:#ef4444;">Erro ao carregar dados do banco de dados.</td></tr>';
         }
+    }
 
-    });
+    function renderizarGraficoRanking(labels, data, colors) {
+        if (chartRankingInstance) chartRankingInstance.destroy();
 
-    ctx.stroke();
+        const ctx = document.getElementById('chartRanking').getContext('2d');
+        chartRankingInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'IQP',
+                    data: data,
+                    backgroundColor: colors,
+                    borderRadius: 6,
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#94a3b8', font: { size: 11 } }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        grid: { color: '#334155' },
+                        ticks: { color: '#94a3b8' }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return ` IQP: ${context.raw}`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
 
-}
-
-carregarDashboard();
-
+    // Executa ao carregar a página
+    carregarDashboardRanking();
 </script>
 
 </body>

@@ -3,89 +3,164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Race Inteligente LIVE</title>
-
+    <title>Race Inteligente LIVE Cloud</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-    <header class="topo">
-        <div class="logo-area">
-            <div class="logo-circle">RI</div>
-            <div>
-                <h1>Race Inteligente LIVE</h1>
-                <p>Sistema de Análise de Pressão Ofensiva</p>
+<header class="topo">
+    <div class="logo-area">
+        <div class="logo-circle">RI</div>
+        <div>
+            <h1>Race Inteligente LIVE Cloud</h1>
+            <p>Análise profissional de partidas de futebol ao vivo</p>
+        </div>
+    </div>
+</header>
+
+<main class="container">
+
+    <!-- PAINEL LIVE -->
+    <section class="card">
+        <h2>PAINEL LIVE</h2>
+
+        <div class="painel-grid">
+            <div class="painel-item">
+                <span>Status</span>
+                <strong id="statusPainel">Aguardando</strong>
+            </div>
+
+            <div class="painel-item">
+                <span>Minuto</span>
+                <strong id="minutoPainel">--</strong>
+            </div>
+
+            <div class="painel-item">
+                <span>IQP</span>
+                <strong id="iqpPainel">--</strong>
+            </div>
+
+            <div class="painel-item">
+                <span>Entrada</span>
+                <strong id="entradaPainel">--</strong>
             </div>
         </div>
-    </header>
+    </section>
 
-    <main class="container">
-
-        <section class="painel-live">
-            <h2>PAINEL LIVE</h2>
-
-            <div class="painel-grid">
-
-                <div class="painel-item">
-                    <span>Status</span>
-                    <strong>Aguardando</strong>
-                </div>
-
-                <div class="painel-item">
-                    <span>Minuto</span>
-                    <strong>--</strong>
-                </div>
-
-                <div class="painel-item">
-                    <span>IQP</span>
-                    <strong>--</strong>
-                </div>
-
-                <div class="painel-item">
-                    <span>Entrada</span>
-                    <strong>--</strong>
-                </div>
-
-            </div>
-        </section>
-
-        <section class="menu-principal">
-
-            <a href="entradas.html" class="menu-card">
+    <!-- NAVEGAÇÃO -->
+    <section class="menu-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-top: 20px;">
+        <a href="entradas.html" class="card-link" style="text-decoration:none; color:inherit;">
+            <div class="card">
                 <h3>Entradas para Analisar</h3>
-                <p>Jogos cadastrados para monitorar aos 65 minutos.</p>
-            </a>
+                <p style="color: #94a3b8; font-size: 0.9rem;">Jogos cadastrados para monitorar aos 65 minutos.</p>
+            </div>
+        </a>
 
-            <a href="live.html" class="menu-card">
+        <a href="analise.html" class="card-link" style="text-decoration:none; color:inherit;">
+            <div class="card">
                 <h3>Nova Análise (LIVE)</h3>
-                <p>Realize uma análise completa durante a partida.</p>
-            </a>
+                <p style="color: #94a3b8; font-size: 0.9rem;">Realize uma análise completa durante a partida.</p>
+            </div>
+        </a>
 
-            <a href="historico.html" class="menu-card">
+        <a href="historico.html" class="card-link" style="text-decoration:none; color:inherit;">
+            <div class="card">
                 <h3>Histórico</h3>
-                <p>Consulte todas as análises realizadas.</p>
-            </a>
+                <p style="color: #94a3b8; font-size: 0.9rem;">Consulte todas as análises realizadas.</p>
+            </div>
+        </a>
 
-            <a href="banco.html" class="menu-card">
+        <a href="banco.html" class="card-link" style="text-decoration:none; color:inherit;">
+            <div class="card">
                 <h3>Banco de Dados</h3>
-                <p>Gerencie ligas e times cadastrados.</p>
-            </a>
+                <p style="color: #94a3b8; font-size: 0.9rem;">Gerencie ligas e times cadastrados.</p>
+            </div>
+        </a>
 
-            <a href="dashboard.html" class="menu-card">
+        <a href="dashboard.html" class="card-link" style="text-decoration:none; color:inherit;">
+            <div class="card">
                 <h3>Dashboard</h3>
-                <p>Estatísticas, IQP, ROI e desempenho do método.</p>
-            </a>
+                <p style="color: #94a3b8; font-size: 0.9rem;">Estatísticas, IQP, ROI e desempenho do método.</p>
+            </div>
+        </a>
+    </section>
 
-        </section>
+</main>
 
-    </main>
+<footer class="rodape" style="text-align: center; padding: 20px; color: #64748b; font-size: 0.85rem;">
+    Race Inteligente LIVE Cloud v0.1 Alpha
+</footer>
 
-    <footer class="rodape">
-        Race Inteligente LIVE Cloud v0.1 Alpha
-    </footer>
+<script src="js/app.js"></script>
 
-    <script src="js/app.js"></script>
+<!-- Módulo para carregar a última análise do Firestore no Painel LIVE -->
+<script type="module">
+    import { db } from './js/firebase-config.js';
+    import { 
+        collection, 
+        query, 
+        orderBy, 
+        limit, 
+        getDocs 
+    } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+
+    async function atualizarPainelLiveNuvem() {
+        try {
+            // Busca a última análise cadastrada no Firestore ordenada pela criação
+            const q = query(collection(db, "ri_historico"), orderBy("criadoEm", "desc"), limit(1));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                const ultimaAnalise = querySnapshot.docs[0].data();
+
+                document.getElementById("statusPainel").textContent = ultimaAnalise.classificacao || "Analisado";
+                document.getElementById("minutoPainel").textContent = (ultimaAnalise.minuto || "--") + "'";
+                document.getElementById("iqpPainel").textContent = ultimaAnalise.iqp || "--";
+                document.getElementById("entradaPainel").textContent = ultimaAnalise.jogo || "--";
+
+                // Aplica cor diferente dependendo do status
+                const statusEl = document.getElementById("statusPainel");
+                if (ultimaAnalise.classificacao === "PREMIUM") statusEl.style.color = "#22c55e";
+                else if (ultimaAnalise.classificacao === "FORTE") statusEl.style.color = "#3b82f6";
+                else if (ultimaAnalise.classificacao === "MODERADA") statusEl.style.color = "#eab308";
+                else statusEl.style.color = "#ef4444";
+
+            } else {
+                // Caso não tenha nenhum registro no banco ainda
+                document.getElementById("statusPainel").textContent = "Aguardando";
+                document.getElementById("minutoPainel").textContent = "--";
+                document.getElementById("iqpPainel").textContent = "--";
+                document.getElementById("entradaPainel").textContent = "Nenhum jogo";
+            }
+        } catch (error) {
+            console.error("Erro ao carregar dados do Painel LIVE:", error);
+            // Fallback caso o índice de ordenação do Firestore ainda não esteja criado
+            fallbackSemOrdenacao();
+        }
+    }
+
+    // Função de garantia caso o orderBy ainda não tenha índice no Firestore
+    async function fallbackSemOrdenacao() {
+        try {
+            const querySnapshot = await getDocs(collection(db, "ri_historico"));
+            if (!querySnapshot.empty) {
+                const docs = [];
+                querySnapshot.forEach(doc => docs.push(doc.data()));
+                const ultima = docs[docs.length - 1]; // Pega o último da lista
+
+                document.getElementById("statusPainel").textContent = ultima.classificacao || "Analisado";
+                document.getElementById("minutoPainel").textContent = (ultima.minuto || "--") + "'";
+                document.getElementById("iqpPainel").textContent = ultima.iqp || "--";
+                document.getElementById("entradaPainel").textContent = ultima.jogo || "--";
+            }
+        } catch (e) {
+            console.error("Erro no fallback:", e);
+        }
+    }
+
+    // Executa na abertura da tela
+    atualizarPainelLiveNuvem();
+</script>
 
 </body>
 </html>

@@ -10,7 +10,8 @@ import {
     addDoc, 
     getDocs, 
     deleteDoc, 
-    doc 
+    doc,
+    writeBatch 
 } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
 // Configuração do projeto Firebase
@@ -29,10 +30,9 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 // ======================================================
-// Operações Firestore - Coleção ri_ligas
+// Ligas (ri_ligas)
 // ======================================================
 
-// Adicionar Liga no Firestore
 export async function adicionarLigaFirestore(ligaData) {
     try {
         const docRef = await addDoc(collection(db, "ri_ligas"), ligaData);
@@ -43,7 +43,6 @@ export async function adicionarLigaFirestore(ligaData) {
     }
 }
 
-// Obter todas as Ligas do Firestore
 export async function obterLigasFirestore() {
     try {
         const querySnapshot = await getDocs(collection(db, "ri_ligas"));
@@ -58,13 +57,53 @@ export async function obterLigasFirestore() {
     }
 }
 
-// Remover Liga do Firestore
 export async function removerLigaFirestore(id) {
     try {
         await deleteDoc(doc(db, "ri_ligas", id));
     } catch (e) {
         console.error("Erro ao remover liga no Firestore: ", e);
         throw e;
+    }
+}
+
+// ======================================================
+// Análises e Bateria de Testes (ri_historico)
+// ======================================================
+
+// Salva uma lista/bateria de análises de uma só vez no Firestore
+export async function exportarBateriaAnalisesFirestore(listaAnalises) {
+    try {
+        const batch = writeBatch(db);
+        const colecaoRef = collection(db, "ri_historico");
+
+        listaAnalises.forEach((item) => {
+            const novoDocRef = doc(colecaoRef);
+            batch.set(novoDocRef, {
+                ...item,
+                criadoEm: new Date()
+            });
+        });
+
+        await batch.commit();
+        console.log("Bateria de análises exportada com sucesso para o Firestore!");
+    } catch (e) {
+        console.error("Erro ao exportar bateria de análises: ", e);
+        throw e;
+    }
+}
+
+// Obtém o histórico completo salvo na nuvem
+export async function obterHistoricoFirestore() {
+    try {
+        const querySnapshot = await getDocs(collection(db, "ri_historico"));
+        const historico = [];
+        querySnapshot.forEach((doc) => {
+            historico.push({ id: doc.id, ...doc.data() });
+        });
+        return historico;
+    } catch (e) {
+        console.error("Erro ao carregar histórico do Firestore: ", e);
+        return [];
     }
 }
 
