@@ -67,6 +67,20 @@
             Adicionar Time
         </button>
     </section>
+<!-- Cadastro em Massa via CSV/Texto -->
+    <section class="card">
+        <h2>Adicionar Times em Massa</h2>
+        <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 10px;">
+            Digite ou cole um time por linha no formato: <strong>Nome, Liga, Nível, País</strong>
+        </p>
+
+        <textarea id="listaTimesTexto" rows="8" style="width: 100%; background: #0f172a; color: #f8fafc; border: 1px solid #334155; padding: 10px; border-radius: 6px;" placeholder="Dinamo Zagreb, Champions League, 5, Croácia&#10;São Paulo, Brasileirão Série A, 4, Brasil&#10;Real Madrid, Champions League, 5, Espanha"></textarea>
+
+        <button id="btnAdicionarTimesMassa" class="btn-success" style="margin-top: 10px;">
+            Importar Todos os Times no Firestore
+        </button>
+    </section>
+
 
     <!-- Ligas -->
     <section class="card">
@@ -77,7 +91,7 @@
     <!-- Times -->
     <section class="card">
         <h2>Times Cadastrados</h2>
-        <div id="listaTimes"></div>
+        <div id="listaTimes">Carregando times do Firestore...</div>
     </section>
 
     <a href="index.html" class="btn">Voltar ao Início</a>
@@ -88,144 +102,8 @@
     Race Inteligente LIVE Cloud v0.1 Alpha
 </footer>
 
-<script src="js/app.js"></script>
-
-<!-- Conexão com Firestore usando Módulos JS -->
-<script type="module">
-    import { 
-        adicionarLigaFirestore, 
-        obterLigasFirestore, 
-        removerLigaFirestore 
-    } from './js/firebase-config.js';
-
-    // Tornar funções globais para permitir o onclick nos botões gerados dinamicamente
-    window.removerLigaNuvem = async function(id) {
-        if (!confirm("Deseja remover esta liga do Firestore?")) return;
-        try {
-            await removerLigaFirestore(id);
-            await carregarLigasEGrid();
-        } catch (e) {
-            alert("Erro ao remover liga.");
-        }
-    };
-
-    async function carregarLigasEGrid() {
-        const lista = document.getElementById("listaLigas");
-        const select = document.getElementById("ligaTime");
-
-        lista.innerHTML = "Carregando ligas do Firestore...";
-        select.innerHTML = "";
-
-        const ligas = await obterLigasFirestore();
-
-        // Atualizar Select
-        if (ligas.length === 0) {
-            lista.innerHTML = "<p style='color:#94a3b8'>Nenhuma liga cadastrada no Firestore.</p>";
-            return;
-        }
-
-        lista.innerHTML = "";
-
-        ligas.forEach((liga) => {
-            // Opção no Select de Times
-            const option = document.createElement("option");
-            option.value = liga.nome;
-            option.textContent = liga.nome;
-            select.appendChild(option);
-
-            // Card na Lista de Ligas
-            const card = document.createElement("div");
-            card.className = "card";
-            card.innerHTML = `
-                <h3>${liga.nome}</h3>
-                <p><strong>País:</strong> ${liga.pais}</p>
-                <p><strong>Nível:</strong> ${liga.nivel}</p>
-                <button class="btn-danger" onclick="window.removerLigaNuvem('${liga.id}')">
-                    Remover
-                </button>
-            `;
-            lista.appendChild(card);
-        });
-    }
-
-    // Event Listener do Botão de Cadastro
-    document.getElementById("btnAdicionarLiga").addEventListener("click", async () => {
-        const nome = document.getElementById("nomeLiga").value.trim();
-        const pais = document.getElementById("paisLiga").value.trim();
-        const nivel = document.getElementById("nivelLiga").value;
-
-        if (!nome || !pais) {
-            alert("Preencha os campos da liga.");
-            return;
-        }
-
-        const btn = document.getElementById("btnAdicionarLiga");
-        btn.disabled = true;
-        btn.textContent = "Salvando...";
-
-        try {
-            await adicionarLigaFirestore({ nome, pais, nivel });
-            document.getElementById("nomeLiga").value = "";
-            document.getElementById("paisLiga").value = "";
-            alert("Liga cadastrada com sucesso no Firestore!");
-            await carregarLigasEGrid();
-        } catch (e) {
-            alert("Erro ao salvar no Firestore. Verifique se as regras do banco permitem escrita.");
-        } finally {
-            btn.disabled = false;
-            btn.textContent = "Adicionar Liga no Firestore";
-        }
-    });
-
-    // Funções legadas para Times (Local)
-    function renderTimes() {
-        const times = RaceInteligente.obterTimes();
-        const lista = document.getElementById("listaTimes");
-        lista.innerHTML = "";
-
-        times.forEach((time, index) => {
-            const card = document.createElement("div");
-            card.className = "card";
-            card.innerHTML = `
-                <h3>${time.nome}</h3>
-                <p><strong>Liga:</strong> ${time.liga}</p>
-                <p><strong>Força:</strong> ${time.forca}</p>
-                <button class="btn-danger" onclick="removerTimeLocal(${index})">
-                    Remover
-                </button>
-            `;
-            lista.appendChild(card);
-        });
-    }
-
-    window.removerTimeLocal = function(index) {
-        const times = RaceInteligente.obterTimes();
-        times.splice(index, 1);
-        localStorage.setItem("ri_times", JSON.stringify(times));
-        renderTimes();
-    };
-
-    document.getElementById("btnAdicionarTime").addEventListener("click", () => {
-        const nome = document.getElementById("nomeTime").value.trim();
-        const liga = document.getElementById("ligaTime").value;
-        const forca = document.getElementById("forcaTime").value;
-
-        if (!nome || !liga) {
-            alert("Preencha os campos do time.");
-            return;
-        }
-
-        const times = RaceInteligente.obterTimes();
-        times.push({ nome, liga, forca });
-        localStorage.setItem("ri_times", JSON.stringify(times));
-        document.getElementById("nomeTime").value = "";
-        renderTimes();
-    });
-
-    // Inicialização ao carregar a página
-    carregarLigasEGrid();
-    renderTimes();
-</script>
+<!-- Módulo JS dedicado para controlar a tela do banco -->
+<script type="module" src="js/banco.js"></script>
 
 </body>
 </html>

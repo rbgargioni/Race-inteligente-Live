@@ -108,11 +108,12 @@
                         <th style="padding: 10px;">Status</th>
                         <th style="padding: 10px;">Aposta Sugerida</th>
                         <th style="padding: 10px;">Data</th>
+                        <th style="padding: 10px; text-align: center;">Ações</th>
                     </tr>
                 </thead>
                 <tbody id="tabelaRanking">
                     <tr>
-                        <td colspan="6" style="padding: 15px; text-align: center; color: #94a3b8;">Carregando ranking do banco de dados...</td>
+                        <td colspan="7" style="padding: 15px; text-align: center; color: #94a3b8;">Carregando ranking do banco de dados...</td>
                     </tr>
                 </tbody>
             </table>
@@ -134,7 +135,9 @@
         collection, 
         getDocs, 
         query, 
-        limit 
+        limit,
+        deleteDoc,
+        doc
     } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
     let chartRankingInstance = null;
@@ -148,14 +151,19 @@
             const querySnapshot = await getDocs(q);
 
             if (querySnapshot.empty) {
-                tabela.innerHTML = '<tr><td colspan="6" style="padding:15px; text-align:center; color:#94a3b8;">Nenhum jogo registrado para exibir no ranking.</td></tr>';
+                tabela.innerHTML = '<tr><td colspan="7" style="padding:15px; text-align:center; color:#94a3b8;">Nenhum jogo registrado para exibir no ranking.</td></tr>';
                 document.getElementById("containerPerfilTimes").innerHTML = "<p style='color:#94a3b8'>Cadastre partidas no histórico para gerar o perfil dos times.</p>";
+                atualizarCardsResumo([]);
+                renderizarGraficoRanking([], [], []);
                 return;
             }
 
             jogosBrutos = [];
-            querySnapshot.forEach(doc => {
-                jogosBrutos.push(doc.data());
+            querySnapshot.forEach(documento => {
+                jogosBrutos.push({
+                    id: documento.id,
+                    ...documento.data()
+                });
             });
 
             // Ordena os jogos do MAIOR IQP para o MENOR
@@ -172,7 +180,7 @@
 
         } catch (error) {
             console.error("Erro ao carregar dashboard:", error);
-            tabela.innerHTML = '<tr><td colspan="6" style="padding:15px; text-align:center; color:#ef4444;">Erro ao carregar dados do banco de dados.</td></tr>';
+            tabela.innerHTML = '<tr><td colspan="7" style="padding:15px; text-align:center; color:#ef4444;">Erro ao carregar dados do banco de dados.</td></tr>';
         }
     }
 
@@ -200,7 +208,7 @@
         tabela.innerHTML = "";
 
         if (dados.length === 0) {
-            tabela.innerHTML = '<tr><td colspan="6" style="padding:15px; text-align:center; color:#94a3b8;">Nenhum jogo encontrado para os filtros selecionados.</td></tr>';
+            tabela.innerHTML = '<tr><td colspan="7" style="padding:15px; text-align:center; color:#94a3b8;">Nenhum jogo encontrado para os filtros selecionados.</td></tr>';
             renderizarGraficoRanking([], [], []);
             return;
         }
@@ -228,7 +236,6 @@
             // Determina a sugestão automática de mercado
             let sugestao = item.apostaSugerida;
             if (!sugestao) {
-                // Cálculo de fallback para dados antigos salvos
                 if (item.iqp >= 70) {
                     sugestao = (Number(item.noAlvo || 0) >= 4) ? "⚽ OVER GOLS LIMITE" : "🚩 OVER ESCANTEIOS LIMITE";
                 } else {
@@ -245,12 +252,39 @@
                 <td style="padding:12px 10px;"><span class="status ${badgeClass}">${item.classificacao}</span></td>
                 <td style="padding:12px 10px; font-weight:bold; color:#f59e0b;">${sugestao}</td>
                 <td style="padding:12px 10px; color:#64748b;">${item.data || '--'}</td>
+                <td style="padding:12px 10px; text-align: center;">
+                    <button class="btn-deletar" data-id="${item.id}" style="background: #ef4444; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold;">
+                        🗑️ Excluir
+                    </button>
+                </td>
             `;
             tabela.appendChild(tr);
         });
 
         renderizarGraficoRanking(rotulosJogos, valoresIQP, coresBarras);
     }
+
+    // EXCLUSÃO DE DOCUMENTOS
+    async function excluirJogo(idDoc) {
+        if (!confirm("Tem certeza que deseja excluir esta entrada do banco de dados?")) return;
+
+        try {
+            await deleteDoc(doc(db, "ri_historico", idDoc));
+            alert("Entrada removida com sucesso!");
+            await carregarDashboardRanking();
+        } catch (error) {
+            console.error("Erro ao excluir documento:", error);
+            alert("Erro ao excluir a entrada do banco de dados.");
+        }
+    }
+
+    // Event listener para botões de deleção na tabela
+    document.getElementById("tabelaRanking").addEventListener("click", (e) => {
+        if (e.target.classList.contains("btn-deletar")) {
+            const id = e.target.getAttribute("data-id");
+            if (id) excluirJogo(id);
+        }
+    });
 
     // LÓGICA DE FILTRO E BUSCA EM TEMPO REAL
     function aplicarFiltros() {

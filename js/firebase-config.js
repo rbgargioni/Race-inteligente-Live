@@ -67,6 +67,43 @@ export async function removerLigaFirestore(id) {
 }
 
 // ======================================================
+// Times (ri_times)
+// ======================================================
+
+export async function adicionarTimeFirestore(timeData) {
+    try {
+        const docRef = await addDoc(collection(db, "ri_times"), timeData);
+        return docRef.id;
+    } catch (e) {
+        console.error("Erro ao adicionar time no Firestore: ", e);
+        throw e;
+    }
+}
+
+export async function obterTimesFirestore() {
+    try {
+        const querySnapshot = await getDocs(collection(db, "ri_times"));
+        const times = [];
+        querySnapshot.forEach((doc) => {
+            times.push({ id: doc.id, ...doc.data() });
+        });
+        return times;
+    } catch (e) {
+        console.error("Erro ao buscar times no Firestore: ", e);
+        return [];
+    }
+}
+
+export async function removerTimeFirestore(id) {
+    try {
+        await deleteDoc(doc(db, "ri_times", id));
+    } catch (e) {
+        console.error("Erro ao remover time no Firestore: ", e);
+        throw e;
+    }
+}
+
+// ======================================================
 // Análises e Bateria de Testes (ri_historico)
 // ======================================================
 
@@ -106,5 +143,29 @@ export async function obterHistoricoFirestore() {
         return [];
     }
 }
+/**
+ * Adiciona uma lista de times no Firestore em uma única operação (Batch)
+ */
+export async function adicionarTimesEmMassaFirestore(listaTimes) {
+    try {
+        const batch = writeBatch(db);
+        const colecaoRef = collection(db, "ri_times");
 
+        listaTimes.forEach((time) => {
+            const novoDocRef = doc(colecaoRef);
+            batch.set(novoDocRef, {
+                nome: time.nome,
+                liga: time.liga,
+                nivel: time.nivel,
+                pais: time.pais || ""
+            });
+        });
+
+        await batch.commit();
+        console.log(`${listaTimes.length} times importados com sucesso!`);
+    } catch (e) {
+        console.error("Erro ao importar times em massa: ", e);
+        throw e;
+    }
+}
 export { db };
