@@ -192,65 +192,169 @@ function adicionarHistorico(item) {
 export function calcularIQP(dados) {
     let score = 0;
 
+    // ===============================
     // Necessidade Tática
+    // ===============================
     if (dados.precisaVencer) score += 20;
 
-    // Posse
+    // ===============================
+    // Posse de Bola
+    // ===============================
     if (dados.posse >= 65) score += 10;
     else if (dados.posse >= 55) score += 6;
 
-    // Ataques perigosos
+    // ===============================
+    // Ataques Perigosos
+    // ===============================
     if (dados.ataquesPerigosos >= 50) score += 20;
     else if (dados.ataquesPerigosos >= 35) score += 14;
     else if (dados.ataquesPerigosos >= 20) score += 8;
 
+    // ===============================
     // Finalizações
+    // ===============================
     if (dados.finalizacoes >= 12) score += 15;
     else if (dados.finalizacoes >= 8) score += 10;
     else if (dados.finalizacoes >= 5) score += 5;
 
-    // Finalizações no alvo
+    // ===============================
+    // Finalizações no Alvo
+    // ===============================
     if (dados.noAlvo >= 6) score += 20;
     else if (dados.noAlvo >= 4) score += 14;
     else if (dados.noAlvo >= 2) score += 8;
 
-    // Odd
+    // ===============================
+    // Escanteios
+    // ===============================
+    if (dados.escanteios >= 11) score += 15;
+    else if (dados.escanteios >= 9) score += 12;
+    else if (dados.escanteios >= 7) score += 8;
+    else if (dados.escanteios >= 5) score += 4;
+
+    // ===============================
+    // Ataques Laterais (favorece cantos)
+    // ===============================
+    if (dados.ataquesLaterais >= 60) score += 10;
+    else if (dados.ataquesLaterais >= 50) score += 6;
+    else if (dados.ataquesLaterais >= 40) score += 3;
+
+    // ===============================
+    // Ataques Centralizados (favorece gols)
+    // ===============================
+    if (dados.ataquesCentralizados >= 50) score += 10;
+    else if (dados.ataquesCentralizados >= 40) score += 6;
+    else if (dados.ataquesCentralizados >= 30) score += 3;
+
+    // ===============================
+    // Odd Ideal
+    // ===============================
     if (dados.odd >= 1.60 && dados.odd <= 2.20) score += 5;
 
-    // Evento extraordinário
+    // ===============================
+    // Evento Extraordinário
+    // ===============================
     if (dados.expulsaoAdversario) score += 10;
 
-    // Penalização: pressão falsa (posse estéril)
+    // ===============================
+    // Penalizações
+    // ===============================
+
+    // Pressão falsa (muita posse sem finalização no alvo)
     if (dados.posse >= 65 && Number(dados.noAlvo) === 0) {
         score -= 20;
     }
 
-    // Trava entre 0 e 100
+    // Muitos ataques perigosos sem finalizações
+    if (dados.ataquesPerigosos >= 40 && Number(dados.finalizacoes) <= 2) {
+        score -= 10;
+    }
+
+    // Ritmo de escanteios (46'–60')
+    if (!dados.houveEscanteio46a60) {
+        score -= 15;
+    }
+
+    // Penalização extra para Race Cantos
+    if (!dados.houveEscanteio46a60 && Number(dados.escanteios) < 2) {
+        score -= 10;
+    }
+
+    // ===============================
+    // IQP Final
+    // ===============================
     const iqp = Math.max(0, Math.min(100, score));
 
-    // 1. Classificação por Nível
+    // ===============================
+    // Classificação Geral
+    // ===============================
     let classificacao = "NÃO ENTRAR";
+
     if (iqp >= 85) classificacao = "PREMIUM";
     else if (iqp >= 70) classificacao = "FORTE";
     else if (iqp >= 55) classificacao = "MODERADA";
 
-    // 2. Sugestão Automática do Mercado Recomendado
-    let apostaSugerida = "⚪ AGUARDAR / SEM ENTRADA";
+    // ===============================
+    // Mercado Preferencial
+    // ===============================
+    let mercadoPreferencial = "AGUARDAR";
 
-    if (iqp >= 70) {
-        if (Number(dados.noAlvo) >= 4 || Number(dados.finalizacoes) >= 10) {
-            apostaSugerida = "⚽ OVER GOLS LIMITE";
-        } else if (Number(dados.ataquesPerigosos) >= 45 || Number(dados.escanteios) >= 6) {
-            apostaSugerida = "🚩 OVER ESCANTEIOS LIMITE";
+    const pressaoCantos =
+        Number(dados.ataquesLaterais || 0) +
+        Number(dados.escanteios || 0) * 2;
+
+    const pressaoGols =
+        Number(dados.ataquesCentralizados || 0) +
+        Number(dados.noAlvo || 0) * 2 +
+        Number(dados.finalizacoes || 0);
+
+    if (pressaoCantos > pressaoGols) {
+        mercadoPreferencial = "CANTOS";
+    } else if (pressaoGols > pressaoCantos) {
+        mercadoPreferencial = "GOLS";
+    }
+
+    // ===============================
+    // Selo de Entrada
+    // ===============================
+    let seloEntrada = "⚪ AGUARDAR / SEM ENTRADA";
+
+    if (iqp >= 85) {
+        if (
+            dados.houveEscanteio46a60 &&
+            Number(dados.ataquesLaterais || 0) >= Number(dados.ataquesCentralizados || 0)
+        ) {
+            seloEntrada = "🏆 PREMIUM CANTOS";
         } else {
-            apostaSugerida = "⚽/🚩 OVER GOLS OU CANTOS";
+            seloEntrada = "🏆 PREMIUM GOLS";
+        }
+    }
+    else if (iqp >= 70) {
+        if (
+            dados.houveEscanteio46a60 &&
+            Number(dados.ataquesLaterais || 0) >= Number(dados.ataquesCentralizados || 0)
+        ) {
+            seloEntrada = "🚩 FORTE CANTOS";
+        } else {
+            seloEntrada = "⚽ FORTE GOLS";
+        }
+    }
+    else if (iqp >= 55) {
+        if (
+            dados.houveEscanteio46a60 &&
+            Number(dados.ataquesLaterais || 0) >= Number(dados.ataquesCentralizados || 0)
+        ) {
+            seloEntrada = "🟨 MODERADA CANTOS";
+        } else {
+            seloEntrada = "🟨 MODERADA GOLS";
         }
     }
 
     return {
         iqp,
         classificacao,
-        apostaSugerida
+        mercadoPreferencial,
+        seloEntrada
     };
 }
 
