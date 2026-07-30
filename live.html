@@ -112,6 +112,7 @@
 <!-- Script com Conexão ao Firestore -->
 <script type="module">
     import { db } from './js/firebase-config.js';
+    import { mostrarNotificacao, mostrarConfirmacao } from './js/ui-modal.js';
     import { 
         doc, 
         getDoc, 
@@ -203,7 +204,7 @@
         const btnSalvar = document.getElementById("btnSalvar");
 
         if (ultimoIQP === null) {
-            alert("Calcule o IQP antes de salvar.");
+            await mostrarNotificacao("Calcule o IQP antes de salvar.");
             return;
         }
 
@@ -239,11 +240,11 @@
 
         try {
             await addDoc(collection(db, "ri_historico"), analise);
-            alert("Análise salva com sucesso no Histórico do Firestore!");
+            await mostrarNotificacao("Análise salva com sucesso no Histórico do Firestore!");
             window.location.href = "dashboard.html"; // Redireciona para ver o gráfico atualizado
         } catch (error) {
             console.error("Erro ao salvar análise:", error);
-            alert("Erro ao salvar a análise no banco de dados.");
+            await mostrarNotificacao("Erro ao salvar a análise no banco de dados.");
         } finally {
             btnSalvar.disabled = false;
             btnSalvar.textContent = "Salvar no Histórico";

@@ -75,6 +75,7 @@
 <!-- Módulo do Firebase para gerenciar as Entradas -->
 <script type="module">
     import { db } from './js/firebase-config.js';
+    import { mostrarNotificacao, mostrarConfirmacao } from './js/ui-modal.js';
     import { 
         collection, 
         addDoc, 
@@ -227,11 +228,11 @@
 
         try {
             await deleteDoc(doc(db, "ri_entradas", idDoc));
-            alert("Jogo removido do banco com sucesso!");
+            await mostrarNotificacao("Jogo removido do banco com sucesso!");
             await renderEntradas();
         } catch (error) {
             console.error("Erro ao excluir entrada:", error);
-            alert("Erro ao excluir o jogo.");
+            await mostrarNotificacao("Erro ao excluir o jogo.");
         }
     }
 
@@ -261,7 +262,7 @@
         };
 
         if (!jogo.data || !jogo.liga || !jogo.casa || !jogo.visitante || !jogo.favorito) {
-            alert("Preencha todos os campos obrigatórios (Data, Liga, Times e Favorito).");
+            await mostrarNotificacao("Preencha todos os campos obrigatórios (Data, Liga, Times e Favorito).");
             return;
         }
 
@@ -271,7 +272,7 @@
         try {
             await addDoc(collection(db, "ri_entradas"), jogo);
 
-            alert("Jogo cadastrado com sucesso no Firestore!");
+            await mostrarNotificacao("Jogo cadastrado com sucesso no Firestore!");
 
             // Limpa os campos do formulário
             document.getElementById("dataJogo").value = "";
@@ -285,7 +286,7 @@
             await renderEntradas();
         } catch (error) {
             console.error("Erro ao adicionar entrada:", error);
-            alert("Erro ao salvar jogo no Firestore.");
+            await mostrarNotificacao("Erro ao salvar jogo no Firestore.");
         } finally {
             btn.disabled = false;
             btn.textContent = "Adicionar Entrada no Firestore";

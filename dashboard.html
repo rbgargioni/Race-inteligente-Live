@@ -130,6 +130,7 @@
 
 <!-- Script de Módulo do Firebase e Chart.js -->
 <script type="module">
+import { mostrarNotificacao, mostrarConfirmacao } from './js/ui-modal.js';
     import { db } from './js/firebase-config.js';
     import { 
         collection, 
@@ -270,11 +271,11 @@
 
         try {
             await deleteDoc(doc(db, "ri_historico", idDoc));
-            alert("Entrada removida com sucesso!");
+            await mostrarNotificacao("Entrada removida com sucesso!");
             await carregarDashboardRanking();
         } catch (error) {
             console.error("Erro ao excluir documento:", error);
-            alert("Erro ao excluir a entrada do banco de dados.");
+            await mostrarNotificacao("Erro ao excluir a entrada do banco de dados.");
         }
     }
 

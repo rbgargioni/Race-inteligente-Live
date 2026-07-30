@@ -92,6 +92,7 @@
         obterHistoricoFirestore,
         db
     } from './js/firebase-config.js';
+    import { mostrarNotificacao, mostrarConfirmacao } from './js/ui-modal.js';
 
     import { 
         collection, 
@@ -183,7 +184,7 @@
                             await deleteDoc(doc(db, "ri_historico", idDoc));
                             await carregarHistoricoNuvem();
                         } catch (err) {
-                            alert("Erro ao excluir documento: " + err.message);
+                            await mostrarNotificacao("Erro ao excluir documento: " + err.message);
                         }
                     }
                 });
@@ -221,10 +222,10 @@
                     criadoEm: new Date()
                 });
             }
-            alert("Bateria enviada com sucesso para o Firestore!");
+            await mostrarNotificacao("Bateria enviada com sucesso para o Firestore!");
             await carregarHistoricoNuvem();
         } catch (e) {
-            alert("Erro ao exportar: " + e.message);
+            await mostrarNotificacao("Erro ao exportar: " + e.message);
         } finally {
             btn.disabled = false;
             btn.textContent = "Gerar Bateria de Testes (10 Jogos)";
@@ -251,11 +252,11 @@
 
             await Promise.all(promessasDeletar);
 
-            alert("Histórico apagado com sucesso!");
+            await mostrarNotificacao("Histórico apagado com sucesso!");
             await carregarHistoricoNuvem();
         } catch (e) {
             console.error("Erro ao limpar banco:", e);
-            alert("Erro ao apagar banco de dados: " + e.message);
+            await mostrarNotificacao("Erro ao apagar banco de dados: " + e.message);
         } finally {
             btn.disabled = false;
             btn.textContent = "Limpar Todo o Histórico";

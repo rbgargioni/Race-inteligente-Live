@@ -548,3 +548,84 @@ th {
     animation: fadeIn 0.3s ease;
 
 }
+
+/* ======================================================
+   MODAL PERSONALIZADO (Substituto do alert e confirm)
+   ====================================================== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal-box {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 420px;
+    width: 90%;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    text-align: center;
+    transform: scale(0.95);
+    transition: transform 0.2s ease;
+}
+
+.modal-overlay.active .modal-box {
+    transform: scale(1);
+}
+
+.modal-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #f8fafc;
+    margin-bottom: 10px;
+}
+
+.modal-message {
+    color: #94a3b8;
+    font-size: 0.95rem;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.btn-modal {
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+}
+
+.btn-modal-ok { background: #3b82f6; color: #fff; }
+.btn-modal-ok:hover { background: #2563eb; }
+
+.btn-modal-cancel { background: #475569; color: #fff; }
+.btn-modal-cancel:hover { background: #334155; }
+
+.btn-modal-danger { background: #ef4444; color: #fff; }
+.btn-modal-danger:hover { background: #dc2626; }

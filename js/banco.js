@@ -1,3 +1,4 @@
+import { mostrarNotificacao, mostrarConfirmacao } from './ui-modal.js';
 import { 
     adicionarLigaFirestore, 
     obterLigasFirestore, 
@@ -18,7 +19,7 @@ window.removerLigaNuvem = async function(id) {
         await removerLigaFirestore(id);
         await carregarLigasEGrid();
     } catch (e) {
-        alert("Erro ao remover liga.");
+        await mostrarNotificacao("Erro ao remover liga.");
     }
 };
 
@@ -28,7 +29,7 @@ window.removerTimeNuvem = async function(id) {
         await removerTimeFirestore(id);
         await carregarTimesGrid();
     } catch (e) {
-        alert("Erro ao remover time.");
+        await mostrarNotificacao("Erro ao remover time.");
     }
 };
 
@@ -138,7 +139,7 @@ function inicializarEventos() {
             const nivel = Number(document.getElementById("nivelLiga").value);
 
             if (!nome || !pais) {
-                alert("Preencha os campos da liga.");
+                await mostrarNotificacao("Preencha os campos da liga.");
                 return;
             }
 
@@ -149,10 +150,10 @@ function inicializarEventos() {
                 await adicionarLigaFirestore({ nome, pais, nivel });
                 document.getElementById("nomeLiga").value = "";
                 document.getElementById("paisLiga").value = "";
-                alert("Liga cadastrada com sucesso no Firestore!");
+                await mostrarNotificacao("Liga cadastrada com sucesso no Firestore!");
                 await carregarLigasEGrid();
             } catch (e) {
-                alert("Erro ao salvar liga no Firestore.");
+                await mostrarNotificacao("Erro ao salvar liga no Firestore.");
             } finally {
                 btnLiga.disabled = false;
                 btnLiga.textContent = "Adicionar Liga no Firestore";
@@ -168,7 +169,7 @@ function inicializarEventos() {
             const nivel = Number(document.getElementById("forcaTime").value);
 
             if (!nome || !liga) {
-                alert("Preencha o nome do time e selecione uma liga.");
+                await mostrarNotificacao("Preencha o nome do time e selecione uma liga.");
                 return;
             }
 
@@ -183,10 +184,10 @@ function inicializarEventos() {
                     pais: "" 
                 });
                 document.getElementById("nomeTime").value = "";
-                alert("Time cadastrado com sucesso no Firestore!");
+                await mostrarNotificacao("Time cadastrado com sucesso no Firestore!");
                 await carregarTimesGrid();
             } catch (e) {
-                alert("Erro ao salvar time no Firestore.");
+                await mostrarNotificacao("Erro ao salvar time no Firestore.");
             } finally {
                 btnTime.disabled = false;
                 btnTime.textContent = "Adicionar Time";
@@ -204,7 +205,7 @@ function inicializarEventos() {
                 .filter(linha => linha.length > 0);
 
             if (linhas.length === 0) {
-                alert("Cole pelo menos uma linha no formato: Nome, Liga, Nível, País");
+                await mostrarNotificacao("Cole pelo menos uma linha no formato: Nome, Liga, Nível, País");
                 return;
             }
 
@@ -232,11 +233,11 @@ function inicializarEventos() {
             });
 
             if (erros.length > 0) {
-                alert(`Atenção: Algumas linhas foram ignoradas por erro de formatação:\n\n` + erros.join("\n"));
+                await mostrarNotificacao(`Atenção: Algumas linhas foram ignoradas por erro de formatação:\n\n` + erros.join("\n"));
             }
 
             if (timesParaSalvar.length === 0) {
-                alert("Nenhum time válido encontrado para salvar.");
+                await mostrarNotificacao("Nenhum time válido encontrado para salvar.");
                 return;
             }
 
@@ -246,10 +247,10 @@ function inicializarEventos() {
             try {
                 await adicionarTimesEmMassaFirestore(timesParaSalvar);
                 document.getElementById("listaTimesTexto").value = "";
-                alert(`${timesParaSalvar.length} times cadastrados com sucesso no Firestore!`);
+                await mostrarNotificacao(`${timesParaSalvar.length} times cadastrados com sucesso no Firestore!`);
                 await carregarTimesGrid();
             } catch (e) {
-                alert("Erro ao importar times em massa no Firestore.");
+                await mostrarNotificacao("Erro ao importar times em massa no Firestore.");
             } finally {
                 btnMassa.disabled = false;
                 btnMassa.textContent = "Importar Todos os Times no Firestore";

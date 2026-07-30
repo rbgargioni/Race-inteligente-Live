@@ -138,6 +138,7 @@
 <script type="module">
     import { db } from './js/firebase-config.js';
     import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+    import { mostrarNotificacao, mostrarConfirmacao } from '/js/ui-modal.js';
 
     let chartIQPInstance = null;
     let chartMetricasInstance = null;
@@ -282,11 +283,11 @@
 
         try {
             await addDoc(collection(db, "ri_historico"), dadosAnaliseAtual);
-            alert("Análise salva com sucesso na nuvem!");
+            await mostrarNotificacao("Análise salva com sucesso na nuvem!");
             window.location.href = "index.html"; // Redireciona para atualizar o painel
         } catch (e) {
             console.error(e);
-            alert("Erro ao salvar análise: " + e.message);
+            await mostrarNotificacao("Erro ao salvar análise: " + e.message);
         } finally {
             btn.disabled = false;
             btn.textContent = "Salvar Análise no Banco de Dados (Firestore)";
