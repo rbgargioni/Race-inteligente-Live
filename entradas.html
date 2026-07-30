@@ -37,12 +37,12 @@
 
         <label for="timeCasa">Time Casa</label>
         <select id="timeCasa">
-            <option value="">Carregando times...</option>
+            <option value="">Selecione primeiro uma liga...</option>
         </select>
 
         <label for="timeVisitante">Time Visitante</label>
         <select id="timeVisitante">
-            <option value="">Carregando times...</option>
+            <option value="">Selecione primeiro uma liga...</option>
         </select>
 
         <label for="favorito">Favorito</label>
@@ -81,10 +81,10 @@
         addDoc, 
         getDocs, 
         deleteDoc, 
-        doc,
-        query,
-        orderBy 
+        doc
     } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+
+    let todosOsTimes = []; // Cache local para filtragem rápida por liga
 
     // 1. Carrega Ligas do Firestore
     async function carregarLigas() {
@@ -106,43 +106,65 @@
         }
     }
 
-    // 2. Carrega Times do Firestore (60 times cadastrados)
-    async function carregarTimes() {
-        const casa = document.getElementById("timeCasa");
-        const visitante = document.getElementById("timeVisitante");
-
+    // 2. Carrega todos os times do Firestore uma única vez
+    async function carregarTimesDoBanco() {
         try {
             const querySnapshot = await getDocs(collection(db, "ri_times"));
-            
-            casa.innerHTML = '<option value="">Selecione o time da casa</option>';
-            visitante.innerHTML = '<option value="">Selecione o time visitante</option>';
+            todosOsTimes = [];
 
-            const times = [];
             querySnapshot.forEach(docSnap => {
-                times.push(docSnap.data());
+                todosOsTimes.push(docSnap.data());
             });
 
-            // Ordena os times alfabeticamente para facilitar a busca no select
-            times.sort((a, b) => a.nome.localeCompare(b.nome));
+            // Ordenação alfabética
+            todosOsTimes.sort((a, b) => a.nome.localeCompare(b.nome));
 
-            times.forEach(time => {
-                const o1 = document.createElement("option");
-                o1.value = time.nome;
-                o1.textContent = `${time.nome} (${time.liga})`;
-
-                const o2 = o1.cloneNode(true);
-
-                casa.appendChild(o1);
-                visitante.appendChild(o2);
-            });
+            atualizarSelectsDeTimes();
         } catch (error) {
             console.error("Erro ao carregar times:", error);
-            casa.innerHTML = '<option value="">Erro ao carregar times</option>';
-            visitante.innerHTML = '<option value="">Erro ao carregar times</option>';
+            document.getElementById("timeCasa").innerHTML = '<option value="">Erro ao carregar times</option>';
+            document.getElementById("timeVisitante").innerHTML = '<option value="">Erro ao carregar times</option>';
         }
     }
 
-    // Atualiza opções do select "Favorito" dinamicamente conforme seleciona casa e visitante
+    // 3. Filtra os times de acordo com a Liga selecionada
+    function atualizarSelectsDeTimes() {
+        const casa = document.getElementById("timeCasa");
+        const visitante = document.getElementById("timeVisitante");
+        const ligaSelecionada = document.getElementById("liga").value;
+
+        casa.innerHTML = '<option value="">Selecione o time da casa</option>';
+        visitante.innerHTML = '<option value="">Selecione o time visitante</option>';
+
+        // Se houver liga selecionada, filtra; caso contrário, exibe todos
+        const timesFiltrados = ligaSelecionada 
+            ? todosOsTimes.filter(time => time.liga === ligaSelecionada)
+            : todosOsTimes;
+
+        if (timesFiltrados.length === 0) {
+            const optVazia = document.createElement("option");
+            optVazia.value = "";
+            optVazia.textContent = "Nenhum time cadastrado nesta liga";
+            casa.appendChild(optVazia);
+            visitante.appendChild(optVazia.cloneNode(true));
+            return;
+        }
+
+        timesFiltrados.forEach(time => {
+            const o1 = document.createElement("option");
+            o1.value = time.nome;
+            o1.textContent = time.nome;
+
+            const o2 = o1.cloneNode(true);
+
+            casa.appendChild(o1);
+            visitante.appendChild(o2);
+        });
+
+        atualizarSelectFavorito();
+    }
+
+    // 4. Atualiza as opções do select de Favorito dinamicamente
     function atualizarSelectFavorito() {
         const casa = document.getElementById("timeCasa").value;
         const visitante = document.getElementById("timeVisitante").value;
@@ -164,16 +186,20 @@
             favorito.appendChild(o2);
         }
 
-        const o3 = document.createElement("option");
-        o3.value = "Empate / Equilibrado";
-        o3.textContent = "Empate / Equilibrado";
-        favorito.appendChild(o3);
+        if (casa || visitante) {
+            const o3 = document.createElement("option");
+            o3.value = "Empate / Equilibrado";
+            o3.textContent = "Empate / Equilibrado";
+            favorito.appendChild(o3);
+        }
     }
 
+    // Listeners para filtros interativos
+    document.getElementById("liga").addEventListener("change", atualizarSelectsDeTimes);
     document.getElementById("timeCasa").addEventListener("change", atualizarSelectFavorito);
     document.getElementById("timeVisitante").addEventListener("change", atualizarSelectFavorito);
 
-    // 3. Renderiza Entradas salvas no Firestore
+    // 5. Renderiza Entradas salvas no Firestore
     async function renderEntradas() {
         const lista = document.getElementById("listaEntradas");
         lista.innerHTML = "<p style='color:#94a3b8'>Buscando jogos monitorados do Firestore...</p>";
@@ -222,21 +248,22 @@
         }
     }
 
-    // 4. Excluir Entrada do Firestore
+    // 6. Excluir Entrada usando Modal de Confirmação Personalizado
     async function excluirEntrada(idDoc) {
-        if (!confirm("Deseja remover este jogo do Firestore?")) return;
+        const confirmou = await mostrarConfirmacao("Deseja mesmo remover esta entrada do monitoramento?", "Excluir Jogo");
+        if (!confirmou) return;
 
         try {
             await deleteDoc(doc(db, "ri_entradas", idDoc));
-            await mostrarNotificacao("Jogo removido do banco com sucesso!");
+            await mostrarNotificacao("Jogo removido do banco com sucesso!", "Sucesso ⚽");
             await renderEntradas();
         } catch (error) {
             console.error("Erro ao excluir entrada:", error);
-            await mostrarNotificacao("Erro ao excluir o jogo.");
+            await mostrarNotificacao("Erro ao excluir o jogo.", "Erro");
         }
     }
 
-    // Event listener para excluir
+    // Listener para o botão Excluir
     document.getElementById("listaEntradas").addEventListener("click", (e) => {
         if (e.target.classList.contains("btn-excluir")) {
             const id = e.target.getAttribute("data-id");
@@ -244,7 +271,7 @@
         }
     });
 
-    // 5. Adicionar Nova Entrada no Firestore
+    // 7. Adicionar Nova Entrada no Firestore
     document.getElementById("btnAdicionarEntrada").addEventListener("click", async () => {
         const btn = document.getElementById("btnAdicionarEntrada");
 
@@ -262,7 +289,7 @@
         };
 
         if (!jogo.data || !jogo.liga || !jogo.casa || !jogo.visitante || !jogo.favorito) {
-            await mostrarNotificacao("Preencha todos os campos obrigatórios (Data, Liga, Times e Favorito).");
+            await mostrarNotificacao("Preencha todos os campos obrigatórios (Data, Liga, Times e Favorito).", "Atenção");
             return;
         }
 
@@ -272,9 +299,9 @@
         try {
             await addDoc(collection(db, "ri_entradas"), jogo);
 
-            await mostrarNotificacao("Jogo cadastrado com sucesso no Firestore!");
+            await mostrarNotificacao("Jogo cadastrado com sucesso no Firestore!", "Sucesso ⚽");
 
-            // Limpa os campos do formulário
+            // Limpa o formulário
             document.getElementById("dataJogo").value = "";
             document.getElementById("liga").value = "";
             document.getElementById("rodada").value = "";
@@ -283,20 +310,21 @@
             document.getElementById("favorito").value = "";
             document.getElementById("oddPreLive").value = "";
 
+            atualizarSelectsDeTimes();
             await renderEntradas();
         } catch (error) {
             console.error("Erro ao adicionar entrada:", error);
-            await mostrarNotificacao("Erro ao salvar jogo no Firestore.");
+            await mostrarNotificacao("Erro ao salvar jogo no Firestore.", "Erro");
         } finally {
             btn.disabled = false;
             btn.textContent = "Adicionar Entrada no Firestore";
         }
     });
 
-    // Execução Inicial
-    carregarLigas();
-    carregarTimes();
-    renderEntradas();
+    // Execução Inicial Assíncrona
+    await carregarLigas();
+    await carregarTimesDoBanco();
+    await renderEntradas();
 </script>
 
 </body>
