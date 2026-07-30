@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova Análise LIVE - Race Inteligente</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="topo">
+    <div class="logo-area">
+        <div class="logo-circle">RI</div>
+        <div>
+            <h1>Nova Análise (LIVE)</h1>
+            <p>Análise de pressão ofensiva aos 65 minutos</p>
+        </div>
+    </div>
+</header>
+
+<main class="container">
+
+    <!-- Identificação -->
+    <section class="card">
+        <h2>Identificação da Partida</h2>
+
+        <label for="jogo">Jogo</label>
+        <input type="text" id="jogo" placeholder="Carregando jogo...">
+
+        <label for="minuto">Minuto</label>
+        <input type="number" id="minuto" value="65">
+
+        <label for="oddRace">Odd Race / Pré-Live</label>
+        <input type="number" step="0.01" id="oddRace" placeholder="Ex: 1.74">
+    </section>
+
+    <!-- Estatísticas -->
+    <section class="card">
+        <h2>Estatísticas do Favorito</h2>
+
+        <label for="posse">Posse (%)</label>
+        <input type="number" id="posse" placeholder="Ex: 62">
+
+        <label for="ataques">Ataques</label>
+        <input type="number" id="ataques" placeholder="Ex: 85">
+
+        <label for="ataquesPerigosos">Ataques Perigosos</label>
+        <input type="number" id="ataquesPerigosos" placeholder="Ex: 54">
+
+        <label for="finalizacoes">Finalizações</label>
+        <input type="number" id="finalizacoes" placeholder="Ex: 12">
+
+        <label for="noAlvo">Finalizações no Alvo</label>
+        <input type="number" id="noAlvo" placeholder="Ex: 5">
+
+        <label for="escanteios">Escanteios</label>
+        <input type="number" id="escanteios" placeholder="Ex: 6">
+    </section>
+
+    <!-- Contexto -->
+    <section class="card">
+        <h2>Contexto Tático</h2>
+
+        <label style="cursor: pointer;">
+            <input type="checkbox" id="precisaVencer" checked>
+            O favorito precisa vencer
+        </label>
+
+        <br><br>
+
+        <label style="cursor: pointer;">
+            <input type="checkbox" id="expulsaoAdversario">
+            O adversário teve jogador expulso
+        </label>
+    </section>
+
+    <!-- Resultado -->
+    <section class="card">
+        <h2>Resultado da Análise</h2>
+
+        <div class="painel-grid">
+            <div class="painel-item">
+                <span>IQP</span>
+                <strong id="resultadoIQP">--</strong>
+            </div>
+
+            <div class="painel-item">
+                <span>Classificação</span>
+                <strong id="resultadoClassificacao">--</strong>
+            </div>
+        </div>
+
+        <div style="margin-top:20px; display: flex; gap: 10px; flex-wrap: wrap;">
+            <button id="btnCalcular" class="btn-success">
+                Calcular IQP
+            </button>
+
+            <button id="btnSalvar" class="btn">
+                Salvar no Histórico
+            </button>
+        </div>
+    </section>
+
+    <a href="entradas.html" class="btn" style="margin-top: 15px; display: inline-block;">Voltar para Entradas</a>
+
+</main>
+
+<footer class="rodape">
+    Race Inteligente LIVE Cloud v0.1 Alpha
+</footer>
+
+<!-- Script com Conexão ao Firestore -->
+<script type="module">
+    import { db } from './js/firebase-config.js';
+    import { 
+        doc, 
+        getDoc, 
+        addDoc, 
+        collection 
+    } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+
+    let ultimoIQP = null;
+    let ultimaClassificacao = null;
+
+    // 1. Pega o ID passado por parâmetro na URL (?id=...)
+    const params = new URLSearchParams(window.location.search);
+    const jogoId = params.get("id");
+
+    // 2. Busca os dados do jogo cadastrado no Firestore e preenche os campos
+    async function carregarDadosEntrada() {
+        if (!jogoId) return;
+
+        try {
+            const docRef = doc(db, "ri_entradas", jogoId);
+            const docSnap = await getDoc(docRef);
+
+            if (docSnap.exists()) {
+                const jogo = docSnap.data();
+
+                // Preenche os campos da tela de forma automática
+                document.getElementById("jogo").value = `${jogo.casa} x ${jogo.visitante}`;
+                if (jogo.minuto) document.getElementById("minuto").value = jogo.minuto.replace("'", "");
+                if (jogo.oddPreLive) document.getElementById("oddRace").value = jogo.oddPreLive;
+            } else {
+                console.warn("Nenhum jogo encontrado com este ID.");
+            }
+        } catch (error) {
+            console.error("Erro ao buscar detalhes da entrada:", error);
+        }
+    }
+
+    // Algoritmo de Cálculo de IQP
+    function calcularIQP(dados) {
+        let iqp = 0;
+
+        // Pesos das estatísticas
+        iqp += (dados.posse * 0.2);
+        iqp += (dados.ataquesPerigosos * 0.6);
+        iqp += (dados.finalizacoes * 1.5);
+        iqp += (dados.noAlvo * 3.0);
+        iqp += (dados.escanteios * 2.0);
+
+        // Bônus de Contexto
+        if (dados.precisaVencer) iqp += 10;
+        if (dados.expulsaoAdversario) iqp += 15;
+
+        // Limita a nota máxima a 100
+        return Math.min(Math.round(iqp), 100);
+    }
+
+    function classificarEntrada(iqp) {
+        if (iqp >= 80) return "PREMIUM";
+        if (iqp >= 65) return "FORTE";
+        if (iqp >= 50) return "MODERADA";
+        return "NÃO ENTRAR";
+    }
+
+    // 3. Listener para o botão de calcular IQP
+    document.getElementById("btnCalcular").addEventListener("click", () => {
+        const dados = {
+            posse: parseFloat(document.getElementById("posse").value || 0),
+            ataques: parseInt(document.getElementById("ataques").value || 0),
+            ataquesPerigosos: parseInt(document.getElementById("ataquesPerigosos").value || 0),
+            finalizacoes: parseInt(document.getElementById("finalizacoes").value || 0),
+            noAlvo: parseInt(document.getElementById("noAlvo").value || 0),
+            escanteios: parseInt(document.getElementById("escanteios").value || 0),
+
+            precisaVencer: document.getElementById("precisaVencer").checked,
+            expulsaoAdversario: document.getElementById("expulsaoAdversario").checked,
+
+            odd: parseFloat(document.getElementById("oddRace").value || 0)
+        };
+
+        ultimoIQP = calcularIQP(dados);
+        ultimaClassificacao = classificarEntrada(ultimoIQP);
+
+        document.getElementById("resultadoIQP").textContent = ultimoIQP;
+        document.getElementById("resultadoClassificacao").textContent = ultimaClassificacao;
+    });
+
+    // 4. Salva a análise diretamente na coleção 'ri_historico' do Firestore
+    document.getElementById("btnSalvar").addEventListener("click", async () => {
+        const btnSalvar = document.getElementById("btnSalvar");
+
+        if (ultimoIQP === null) {
+            alert("Calcule o IQP antes de salvar.");
+            return;
+        }
+
+        const noAlvoVal = parseInt(document.getElementById("noAlvo").value || 0);
+
+        // Sugestão Automática de Mercado
+        let sugestao = "⚪ AGUARDAR / SEM ENTRADA";
+        if (ultimoIQP >= 70) {
+            sugestao = (noAlvoVal >= 4) ? "⚽ OVER GOLS LIMITE" : "🚩 OVER ESCANTEIOS LIMITE";
+        }
+
+        const analise = {
+            data: new Date().toLocaleDateString("pt-BR"),
+            jogo: document.getElementById("jogo").value,
+            minuto: document.getElementById("minuto").value,
+            iqp: ultimoIQP,
+            classificacao: ultimaClassificacao,
+            apostaSugerida: sugestao,
+            odd: document.getElementById("oddRace").value,
+            posse: document.getElementById("posse").value,
+            ataques: document.getElementById("ataques").value,
+            ataquesPerigosos: document.getElementById("ataquesPerigosos").value,
+            finalizacoes: document.getElementById("finalizacoes").value,
+            noAlvo: noAlvoVal,
+            escanteios: document.getElementById("escanteios").value,
+            precisaVencer: document.getElementById("precisaVencer").checked,
+            expulsaoAdversario: document.getElementById("expulsaoAdversario").checked,
+            criadoEm: new Date()
+        };
+
+        btnSalvar.disabled = true;
+        btnSalvar.textContent = "Salvando...";
+
+        try {
+            await addDoc(collection(db, "ri_historico"), analise);
+            alert("Análise salva com sucesso no Histórico do Firestore!");
+            window.location.href = "dashboard.html"; // Redireciona para ver o gráfico atualizado
+        } catch (error) {
+            console.error("Erro ao salvar análise:", error);
+            alert("Erro ao salvar a análise no banco de dados.");
+        } finally {
+            btnSalvar.disabled = false;
+            btnSalvar.textContent = "Salvar no Histórico";
+        }
+    });
+
+    // Carrega dados assim que entra na tela
+    carregarDadosEntrada();
+</script>
+
+</body>
+</html>

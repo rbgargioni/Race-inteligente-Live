@@ -21,9 +21,7 @@
 <main class="container">
 
     <!-- Cadastro de nova entrada -->
-
     <section class="card">
-
         <h2>Nova Entrada</h2>
 
         <label for="dataJogo">Data</label>
@@ -31,7 +29,7 @@
 
         <label for="liga">Competição</label>
         <select id="liga">
-            <option value="">Selecione uma liga</option>
+            <option value="">Carregando ligas...</option>
         </select>
 
         <label for="rodada">Rodada</label>
@@ -39,12 +37,12 @@
 
         <label for="timeCasa">Time Casa</label>
         <select id="timeCasa">
-            <option value="">Selecione o time da casa</option>
+            <option value="">Carregando times...</option>
         </select>
 
         <label for="timeVisitante">Time Visitante</label>
         <select id="timeVisitante">
-            <option value="">Selecione o time visitante</option>
+            <option value="">Carregando times...</option>
         </select>
 
         <label for="favorito">Favorito</label>
@@ -56,22 +54,17 @@
         <input type="number" step="0.01" id="oddPreLive" placeholder="Ex: 1.72">
 
         <button id="btnAdicionarEntrada" class="btn-success">
-            Adicionar Entrada
+            Adicionar Entrada no Firestore
         </button>
-
     </section>
 
     <!-- Lista de entradas -->
-
     <section class="card">
-
         <h2>Jogos Monitorados</h2>
-
-        <div id="listaEntradas"></div>
-
+        <div id="listaEntradas">Carregando jogos do banco...</div>
     </section>
 
-    <a href="index.html" class="btn">Voltar ao Início</a>
+    <a href="index.html" class="btn" style="margin-top: 15px; display: inline-block;">Voltar ao Início</a>
 
 </main>
 
@@ -79,157 +72,230 @@
     Race Inteligente LIVE Cloud v0.1 Alpha
 </footer>
 
-<script src="js/app.js"></script>
+<!-- Módulo do Firebase para gerenciar as Entradas -->
+<script type="module">
+    import { db } from './js/firebase-config.js';
+    import { 
+        collection, 
+        addDoc, 
+        getDocs, 
+        deleteDoc, 
+        doc,
+        query,
+        orderBy 
+    } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
-<script>
+    // 1. Carrega Ligas do Firestore
+    async function carregarLigas() {
+        const select = document.getElementById("liga");
+        try {
+            const querySnapshot = await getDocs(collection(db, "ri_ligas"));
+            select.innerHTML = '<option value="">Selecione uma liga</option>';
 
-function carregarLigas() {
+            querySnapshot.forEach(docSnap => {
+                const liga = docSnap.data();
+                const option = document.createElement("option");
+                option.value = liga.nome;
+                option.textContent = liga.nome;
+                select.appendChild(option);
+            });
+        } catch (error) {
+            console.error("Erro ao carregar ligas:", error);
+            select.innerHTML = '<option value="">Erro ao carregar ligas</option>';
+        }
+    }
 
-    const ligas = RaceInteligente.obterLigas();
-    const select = document.getElementById("liga");
+    // 2. Carrega Times do Firestore (60 times cadastrados)
+    async function carregarTimes() {
+        const casa = document.getElementById("timeCasa");
+        const visitante = document.getElementById("timeVisitante");
 
-    select.innerHTML = "<option value="">Selecione uma liga</option>";
+        try {
+            const querySnapshot = await getDocs(collection(db, "ri_times"));
+            
+            casa.innerHTML = '<option value="">Selecione o time da casa</option>';
+            visitante.innerHTML = '<option value="">Selecione o time visitante</option>';
 
-    ligas.forEach(liga => {
+            const times = [];
+            querySnapshot.forEach(docSnap => {
+                times.push(docSnap.data());
+            });
 
-        const option = document.createElement("option");
-        option.value = liga.nome;
-        option.textContent = liga.nome;
+            // Ordena os times alfabeticamente para facilitar a busca no select
+            times.sort((a, b) => a.nome.localeCompare(b.nome));
 
-        select.appendChild(option);
+            times.forEach(time => {
+                const o1 = document.createElement("option");
+                o1.value = time.nome;
+                o1.textContent = `${time.nome} (${time.liga})`;
 
-    });
+                const o2 = o1.cloneNode(true);
 
-}
+                casa.appendChild(o1);
+                visitante.appendChild(o2);
+            });
+        } catch (error) {
+            console.error("Erro ao carregar times:", error);
+            casa.innerHTML = '<option value="">Erro ao carregar times</option>';
+            visitante.innerHTML = '<option value="">Erro ao carregar times</option>';
+        }
+    }
 
-function carregarTimes() {
+    // Atualiza opções do select "Favorito" dinamicamente conforme seleciona casa e visitante
+    function atualizarSelectFavorito() {
+        const casa = document.getElementById("timeCasa").value;
+        const visitante = document.getElementById("timeVisitante").value;
+        const favorito = document.getElementById("favorito");
 
-    const times = RaceInteligente.obterTimes();
+        favorito.innerHTML = '<option value="">Selecione o favorito</option>';
 
-    const casa = document.getElementById("timeCasa");
-    const visitante = document.getElementById("timeVisitante");
-    const favorito = document.getElementById("favorito");
+        if (casa) {
+            const o1 = document.createElement("option");
+            o1.value = casa;
+            o1.textContent = `Casa: ${casa}`;
+            favorito.appendChild(o1);
+        }
 
-    casa.innerHTML = "<option value="">Selecione o time da casa</option>";
-    visitante.innerHTML = "<option value="">Selecione o time visitante</option>";
-    favorito.innerHTML = "<option value="">Selecione o favorito</option>";
+        if (visitante) {
+            const o2 = document.createElement("option");
+            o2.value = visitante;
+            o2.textContent = `Visitante: ${visitante}`;
+            favorito.appendChild(o2);
+        }
 
-    times.forEach(time => {
-
-        const o1 = document.createElement("option");
-        o1.value = time.nome;
-        o1.textContent = time.nome;
-
-        const o2 = o1.cloneNode(true);
-        const o3 = o1.cloneNode(true);
-
-        casa.appendChild(o1);
-        visitante.appendChild(o2);
+        const o3 = document.createElement("option");
+        o3.value = "Empate / Equilibrado";
+        o3.textContent = "Empate / Equilibrado";
         favorito.appendChild(o3);
-
-    });
-
-}
-
-function renderEntradas() {
-
-    const lista = document.getElementById("listaEntradas");
-    const entradas = RaceInteligente.obterEntradas();
-
-    if (entradas.length === 0) {
-
-        lista.innerHTML = "<p style='color:#94a3b8'>Nenhum jogo cadastrado.</p>";
-        return;
-
     }
 
-    lista.innerHTML = "";
+    document.getElementById("timeCasa").addEventListener("change", atualizarSelectFavorito);
+    document.getElementById("timeVisitante").addEventListener("change", atualizarSelectFavorito);
 
-    entradas.forEach(jogo => {
+    // 3. Renderiza Entradas salvas no Firestore
+    async function renderEntradas() {
+        const lista = document.getElementById("listaEntradas");
+        lista.innerHTML = "<p style='color:#94a3b8'>Buscando jogos monitorados do Firestore...</p>";
 
-        const card = document.createElement("div");
-        card.className = "card";
+        try {
+            const querySnapshot = await getDocs(collection(db, "ri_entradas"));
 
-        card.innerHTML = `
+            if (querySnapshot.empty) {
+                lista.innerHTML = "<p style='color:#94a3b8'>Nenhum jogo cadastrado no Firestore.</p>";
+                return;
+            }
 
-            <h3>${jogo.casa} x ${jogo.visitante}</h3>
+            lista.innerHTML = "";
 
-            <p><strong>Liga:</strong> ${jogo.liga}</p>
-            <p><strong>Data:</strong> ${jogo.data}</p>
-            <p><strong>Favorito:</strong> ${jogo.favorito}</p>
-            <p><strong>Odd Pré-Live:</strong> ${jogo.oddPreLive}</p>
+            querySnapshot.forEach(docSnap => {
+                const jogo = { id: docSnap.id, ...docSnap.data() };
 
-            <div style="margin-top:16px; display:flex; gap:12px; flex-wrap:wrap;">
+                const card = document.createElement("div");
+                card.className = "card";
+                card.style.border = "1px solid #334155";
+                card.style.marginBottom = "10px";
 
-                <a href="live.html?id=${jogo.id}" class="btn">
-                    Analisar
-                </a>
+                card.innerHTML = `
+                    <h3>${jogo.casa} x ${jogo.visitante}</h3>
+                    <p><strong>Liga:</strong> ${jogo.liga || '-'}</p>
+                    <p><strong>Data:</strong> ${jogo.data || '-'}</p>
+                    <p><strong>Favorito:</strong> ${jogo.favorito || '-'}</p>
+                    <p><strong>Odd Pré-Live:</strong> ${jogo.oddPreLive || '-'}</p>
+                    <p><strong>Status:</strong> <span style="color:#22c55e">${jogo.status || 'Aguardando'}</span></p>
 
-                <button class="btn-danger" onclick="excluirEntrada('${jogo.id}')">
-                    Excluir
-                </button>
+                    <div style="margin-top:16px; display:flex; gap:12px; flex-wrap:wrap;">
+                        <a href="live.html?id=${jogo.id}" class="btn">
+                            Analisar
+                        </a>
+                        <button class="btn-danger btn-excluir" data-id="${jogo.id}">
+                            Excluir
+                        </button>
+                    </div>
+                `;
 
-            </div>
-
-        `;
-
-        lista.appendChild(card);
-
-    });
-
-}
-
-function excluirEntrada(id) {
-
-    if (!confirm("Deseja remover este jogo?")) return;
-
-    RaceInteligente.removerEntrada(id);
-
-    renderEntradas();
-
-}
-
-document.getElementById("btnAdicionarEntrada").addEventListener("click", () => {
-
-    const jogo = {
-
-        data: document.getElementById("dataJogo").value,
-        liga: document.getElementById("liga").value,
-        rodada: document.getElementById("rodada").value,
-        casa: document.getElementById("timeCasa").value,
-        visitante: document.getElementById("timeVisitante").value,
-        favorito: document.getElementById("favorito").value,
-        oddPreLive: document.getElementById("oddPreLive").value,
-        minuto: "65'",
-        status: "Aguardando"
-
-    };
-
-    if (!jogo.data || !jogo.liga || !jogo.casa || !jogo.visitante || !jogo.favorito) {
-
-        alert("Preencha os campos obrigatórios.");
-        return;
-
+                lista.appendChild(card);
+            });
+        } catch (error) {
+            console.error("Erro ao carregar entradas:", error);
+            lista.innerHTML = "<p style='color:#ef4444'>Erro ao carregar entradas do banco de dados.</p>";
+        }
     }
 
-    RaceInteligente.adicionarEntrada(jogo);
+    // 4. Excluir Entrada do Firestore
+    async function excluirEntrada(idDoc) {
+        if (!confirm("Deseja remover este jogo do Firestore?")) return;
 
+        try {
+            await deleteDoc(doc(db, "ri_entradas", idDoc));
+            alert("Jogo removido do banco com sucesso!");
+            await renderEntradas();
+        } catch (error) {
+            console.error("Erro ao excluir entrada:", error);
+            alert("Erro ao excluir o jogo.");
+        }
+    }
+
+    // Event listener para excluir
+    document.getElementById("listaEntradas").addEventListener("click", (e) => {
+        if (e.target.classList.contains("btn-excluir")) {
+            const id = e.target.getAttribute("data-id");
+            if (id) excluirEntrada(id);
+        }
+    });
+
+    // 5. Adicionar Nova Entrada no Firestore
+    document.getElementById("btnAdicionarEntrada").addEventListener("click", async () => {
+        const btn = document.getElementById("btnAdicionarEntrada");
+
+        const jogo = {
+            data: document.getElementById("dataJogo").value,
+            liga: document.getElementById("liga").value,
+            rodada: document.getElementById("rodada").value,
+            casa: document.getElementById("timeCasa").value,
+            visitante: document.getElementById("timeVisitante").value,
+            favorito: document.getElementById("favorito").value,
+            oddPreLive: document.getElementById("oddPreLive").value,
+            minuto: "65'",
+            status: "Aguardando",
+            criadoEm: new Date()
+        };
+
+        if (!jogo.data || !jogo.liga || !jogo.casa || !jogo.visitante || !jogo.favorito) {
+            alert("Preencha todos os campos obrigatórios (Data, Liga, Times e Favorito).");
+            return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = "Salvando na Nuvem...";
+
+        try {
+            await addDoc(collection(db, "ri_entradas"), jogo);
+
+            alert("Jogo cadastrado com sucesso no Firestore!");
+
+            // Limpa os campos do formulário
+            document.getElementById("dataJogo").value = "";
+            document.getElementById("liga").value = "";
+            document.getElementById("rodada").value = "";
+            document.getElementById("timeCasa").value = "";
+            document.getElementById("timeVisitante").value = "";
+            document.getElementById("favorito").value = "";
+            document.getElementById("oddPreLive").value = "";
+
+            await renderEntradas();
+        } catch (error) {
+            console.error("Erro ao adicionar entrada:", error);
+            alert("Erro ao salvar jogo no Firestore.");
+        } finally {
+            btn.disabled = false;
+            btn.textContent = "Adicionar Entrada no Firestore";
+        }
+    });
+
+    // Execução Inicial
+    carregarLigas();
+    carregarTimes();
     renderEntradas();
-
-    document.getElementById("dataJogo").value = "";
-    document.getElementById("liga").value = "";
-    document.getElementById("rodada").value = "";
-    document.getElementById("timeCasa").value = "";
-    document.getElementById("timeVisitante").value = "";
-    document.getElementById("favorito").value = "";
-    document.getElementById("oddPreLive").value = "";
-
-});
-
-carregarLigas();
-carregarTimes();
-renderEntradas();
-
 </script>
 
 </body>
