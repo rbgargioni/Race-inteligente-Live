@@ -13,7 +13,7 @@
         <div class="logo-circle">RI</div>
         <div>
             <h1>Histórico de Análises (Nuvem)</h1>
-            <p>Todas as análises registradas no Firestore</p>
+            <p>Validação de resultados e histórico completo no Firestore</p>
         </div>
     </div>
 </header>
@@ -99,10 +99,40 @@
         addDoc, 
         deleteDoc, 
         doc, 
-        getDocs 
+        getDocs,
+        updateDoc 
     } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
-    // Renderizar o Histórico vindo da nuvem
+    // 1. Atualizar o resultado pós-jogo no Firestore
+    async function registrarResultado(idDoc, resultado, odd) {
+        let lucro = 0;
+        const oddNum = parseFloat(odd || 1.80);
+
+        if (resultado === 'GREEN') {
+            lucro = parseFloat((oddNum - 1).toFixed(2));
+        } else if (resultado === 'RED') {
+            lucro = -1.0;
+        } else {
+            lucro = 0.0; // VOID
+        }
+
+        try {
+            const docRef = doc(db, "ri_historico", idDoc);
+            await updateDoc(docRef, {
+                statusResultado: resultado,
+                lucroUnidades: lucro,
+                validadoEm: new Date()
+            });
+
+            await mostrarNotificacao(`Resultado marcado como ${resultado}!`, "Sucesso ⚽");
+            await carregarHistoricoNuvem();
+        } catch (err) {
+            console.error("Erro ao registrar resultado:", err);
+            await mostrarNotificacao("Erro ao atualizar o resultado no banco.");
+        }
+    }
+
+    // 2. Renderizar o Histórico do Firestore
     async function carregarHistoricoNuvem() {
         const lista = document.getElementById("listaHistorico");
         lista.innerHTML = "Carregando análises do Firestore...";
@@ -143,6 +173,18 @@
                 if (item.classificacao === "FORTE") classe = "status-forte";
                 if (item.classificacao === "MODERADA") classe = "status-moderada";
 
+                // Formatação da Badge de Resultado
+                let statusHtml = '';
+                if (item.statusResultado === 'GREEN') {
+                    statusHtml = `<span style="background:#22c55e; color:#fff; padding:4px 10px; border-radius:6px; font-weight:bold; font-size:0.85rem;">🟢 GREEN (+${item.lucroUnidades || 0}u)</span>`;
+                } else if (item.statusResultado === 'RED') {
+                    statusHtml = `<span style="background:#ef4444; color:#fff; padding:4px 10px; border-radius:6px; font-weight:bold; font-size:0.85rem;">🔴 RED (-1.0u)</span>`;
+                } else if (item.statusResultado === 'VOID') {
+                    statusHtml = `<span style="background:#64748b; color:#fff; padding:4px 10px; border-radius:6px; font-weight:bold; font-size:0.85rem;">⚪ VOID (0.0u)</span>`;
+                } else {
+                    statusHtml = `<span style="color:#eab308; font-weight:bold; font-size:0.85rem;">⏳ Aguardando Validação</span>`;
+                }
+
                 card.innerHTML = `
                     <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; padding-right: 35px;">
                         <h3>${item.jogo}</h3>
@@ -157,7 +199,24 @@
                     <p><strong>Data:</strong> ${item.data}</p>
                     <p><strong>Minuto:</strong> ${item.minuto}'</p>
                     <p><strong>IQP:</strong> ${item.iqp}</p>
-                    <p><strong>Odd Race:</strong> ${item.odd}</p>
+                    <p><strong>Odd Race:</strong> ${item.odd || '1.80'}</p>
+                    <p><strong>Resultado da Aposta:</strong> ${statusHtml}</p>
+
+                    <hr style="border:none; border-top:1px solid #334155; margin:16px 0;">
+
+                    <!-- Botões de Ação GREEN / RED / VOID -->
+                    <p style="margin-bottom:8px; font-size:0.85rem; color:#94a3b8;"><strong>Confirmar Desfecho:</strong></p>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;">
+                        <button class="btn-green" data-id="${item.id}" data-odd="${item.odd || 1.80}" style="flex:1; background:#22c55e; color:#fff; border:none; padding:8px; border-radius:6px; font-weight:bold; cursor:pointer;">
+                            🟢 GREEN
+                        </button>
+                        <button class="btn-red" data-id="${item.id}" data-odd="${item.odd || 1.80}" style="flex:1; background:#ef4444; color:#fff; border:none; padding:8px; border-radius:6px; font-weight:bold; cursor:pointer;">
+                            🔴 RED
+                        </button>
+                        <button class="btn-void" data-id="${item.id}" data-odd="${item.odd || 1.80}" style="flex:1; background:#64748b; color:#fff; border:none; padding:8px; border-radius:6px; font-weight:bold; cursor:pointer;">
+                            ⚪ VOID
+                        </button>
+                    </div>
 
                     <hr style="border:none; border-top:1px solid #334155; margin:16px 0;">
 
@@ -175,13 +234,40 @@
                 lista.appendChild(card);
             });
 
-            // Event Listener para os botões de exclusão individual
+            // Event Listeners dos Botões de Resultado
+            document.querySelectorAll(".btn-green").forEach(btn => {
+                btn.addEventListener("click", (e) => {
+                    const id = e.target.getAttribute("data-id");
+                    const odd = e.target.getAttribute("data-odd");
+                    registrarResultado(id, "GREEN", odd);
+                });
+            });
+
+            document.querySelectorAll(".btn-red").forEach(btn => {
+                btn.addEventListener("click", (e) => {
+                    const id = e.target.getAttribute("data-id");
+                    const odd = e.target.getAttribute("data-odd");
+                    registrarResultado(id, "RED", odd);
+                });
+            });
+
+            document.querySelectorAll(".btn-void").forEach(btn => {
+                btn.addEventListener("click", (e) => {
+                    const id = e.target.getAttribute("data-id");
+                    const odd = e.target.getAttribute("data-odd");
+                    registrarResultado(id, "VOID", odd);
+                });
+            });
+
+            // Event Listener para Exclusão Individual com Modal de Confirmação
             document.querySelectorAll(".btn-deletar-item").forEach(btn => {
                 btn.addEventListener("click", async (e) => {
                     const idDoc = e.target.getAttribute("data-id");
-                    if (confirm("Deseja realmente remover esta análise do banco de dados?")) {
+                    const confirmou = await mostrarConfirmacao("Deseja realmente remover esta análise do banco de dados?", "Excluir Análise");
+                    if (confirmou) {
                         try {
                             await deleteDoc(doc(db, "ri_historico", idDoc));
+                            await mostrarNotificacao("Análise excluída com sucesso!");
                             await carregarHistoricoNuvem();
                         } catch (err) {
                             await mostrarNotificacao("Erro ao excluir documento: " + err.message);
@@ -192,11 +278,11 @@
 
         } catch (err) {
             console.error(err);
-            lista.innerHTML = "<p style='color:#ef4444'>Erro ao carregar dados do Firestore. Verifique se as Regras de Segurança estão liberadas no Console do Firebase.</p>";
+            lista.innerHTML = "<p style='color:#ef4444'>Erro ao carregar dados do Firestore.</p>";
         }
     }
 
-    // Botão para Gerar Bateria de Análises Simuladas
+    // Botão para Gerar Bateria de Testes
     document.getElementById("btnExportarBateria").addEventListener("click", async () => {
         const btn = document.getElementById("btnExportarBateria");
         btn.disabled = true;
@@ -234,9 +320,8 @@
 
     // Botão para Limpar Todo o Histórico
     document.getElementById("btnLimparBanco").addEventListener("click", async () => {
-        if (!confirm("TEM CERTEZA? Isso excluirá TODAS as análises salvas no Firestore!")) {
-            return;
-        }
+        const confirmou = await mostrarConfirmacao("TEM CERTEZA? Isso excluirá TODAS as análises salvas no Firestore!", "Limpar Banco");
+        if (!confirmou) return;
 
         const btn = document.getElementById("btnLimparBanco");
         btn.disabled = true;
@@ -244,8 +329,6 @@
 
         try {
             const querySnapshot = await getDocs(collection(db, "ri_historico"));
-            
-            // Exclui cada documento da coleção
             const promessasDeletar = querySnapshot.docs.map(documento => 
                 deleteDoc(doc(db, "ri_historico", documento.id))
             );
@@ -263,7 +346,7 @@
         }
     });
 
-    // Carregar na inicialização
+    // Execução inicial
     carregarHistoricoNuvem();
 </script>
 
