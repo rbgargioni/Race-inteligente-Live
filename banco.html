@@ -67,30 +67,36 @@
             Adicionar Time
         </button>
     </section>
-<!-- Cadastro em Massa via CSV/Texto -->
+
+    <!-- Cadastro em Massa via CSV/Texto -->
     <section class="card">
         <h2>Adicionar Times em Massa</h2>
         <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 10px;">
             Digite ou cole um time por linha no formato: <strong>Nome, Liga, Nível, País</strong>
         </p>
 
-        <textarea id="listaTimesTexto" rows="8" style="width: 100%; background: #0f172a; color: #f8fafc; border: 1px solid #334155; padding: 10px; border-radius: 6px;" placeholder="Dinamo Zagreb, Champions League, 5, Croácia&#10;São Paulo, Brasileirão Série A, 4, Brasil&#10;Real Madrid, Champions League, 5, Espanha"></textarea>
+        <textarea id="listaTimesTexto" rows="5" style="width: 100%; background: #0f172a; color: #f8fafc; border: 1px solid #334155; padding: 10px; border-radius: 6px;" placeholder="Dinamo Zagreb, Champions League, 5, Croácia&#10;São Paulo, Brasileirão Série A, 4, Brasil"></textarea>
 
         <button id="btnAdicionarTimesMassa" class="btn-success" style="margin-top: 10px;">
             Importar Todos os Times no Firestore
         </button>
     </section>
 
-
-    <!-- Ligas -->
+    <!-- Ligas Cadastradas -->
     <section class="card">
         <h2>Ligas Cadastradas (Nuvem)</h2>
+        <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 15px;">
+            Clique em uma liga para visualizar todos os detalhes.
+        </p>
         <div id="listaLigas">Carregando ligas do Firestore...</div>
     </section>
 
-    <!-- Times -->
+    <!-- Times Cadastrados -->
     <section class="card">
         <h2>Times Cadastrados</h2>
+        <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 15px;">
+            Clique em um time para visualizar todas as informações detalhadas.
+        </p>
         <div id="listaTimes">Carregando times do Firestore...</div>
     </section>
 
@@ -98,11 +104,56 @@
 
 </main>
 
+<!-- Modal para Detalhes do Time -->
+<div id="modalDetalhesTime" class="modal-overlay">
+    <div class="modal-box" style="text-align: left; max-width: 450px;">
+        <h3 id="detalheNomeTime" style="color: #3b82f6; font-size: 1.3rem; margin-bottom: 15px; border-bottom: 1px solid #334155; padding-bottom: 8px;">--</h3>
+        
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+            <p style="color: #cbd5e1; font-size: 0.95rem;"><strong>🏆 Liga:</strong> <span id="detalheLigaTime">--</span></p>
+            <p style="color: #cbd5e1; font-size: 0.95rem;"><strong>🌐 País:</strong> <span id="detalhePaisTime">--</span></p>
+            <p style="color: #cbd5e1; font-size: 0.95rem;"><strong>⭐ Força / Nível:</strong> <span id="detalheNivelTime">--</span>/5</p>
+            <p style="color: #cbd5e1; font-size: 0.85rem;"><strong>🆔 ID Firestore:</strong> <span id="detalheIdTime" style="color: #64748b; font-family: monospace;">--</span></p>
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+            <button id="btnExcluirTimeModal" class="btn-danger" style="padding: 8px 16px; font-size: 0.9rem;">
+                🗑️ Remover Time
+            </button>
+            <button id="btnFecharModalTime" class="btn-modal btn-modal-cancel" style="padding: 8px 16px;">
+                Fechar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Detalhes da Liga -->
+<div id="modalDetalhesLiga" class="modal-overlay">
+    <div class="modal-box" style="text-align: left; max-width: 450px;">
+        <h3 id="detalheNomeLiga" style="color: #3b82f6; font-size: 1.3rem; margin-bottom: 15px; border-bottom: 1px solid #334155; padding-bottom: 8px;">--</h3>
+        
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+            <p style="color: #cbd5e1; font-size: 0.95rem;"><strong>🌐 País / Organização:</strong> <span id="detalhePaisLiga">--</span></p>
+            <p style="color: #cbd5e1; font-size: 0.95rem;"><strong>⭐ Nível Técnico:</strong> <span id="detalheNivelLiga">--</span>/5</p>
+            <p style="color: #cbd5e1; font-size: 0.85rem;"><strong>🆔 ID Firestore:</strong> <span id="detalheIdLiga" style="color: #64748b; font-family: monospace;">--</span></p>
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+            <button id="btnExcluirLigaModal" class="btn-danger" style="padding: 8px 16px; font-size: 0.9rem;">
+                🗑️ Remover Liga
+            </button>
+            <button id="btnFecharModalLiga" class="btn-modal btn-modal-cancel" style="padding: 8px 16px;">
+                Fechar
+            </button>
+        </div>
+    </div>
+</div>
+
 <footer class="rodape">
     Race Inteligente LIVE Cloud v0.1 Alpha
 </footer>
 
-<!-- Módulo JS dedicado para controlar a tela do banco -->
+<!-- Módulo JS dedicado -->
 <script type="module" src="js/banco.js"></script>
 
 </body>
