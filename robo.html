@@ -3,8 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Robô de Operações - RI</title>
+    <title>Robô de Análise Esportiva - RI</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        .grid-dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: var(--surface-hover, #1e293b);
+            border: 1px solid var(--border, #334155);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .stat-card .label {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .stat-card .value {
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+        .text-green { color: #22c55e; }
+        .text-red { color: #ef4444; }
+        .text-blue { color: #3b82f6; }
+        
+        .log-box {
+            background: #090d16;
+            border: 1px solid var(--border, #334155);
+            border-radius: 10px;
+            padding: 15px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.85rem;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .log-item { margin: 0; }
+        .log-info { color: #94a3b8; }
+        .log-win { color: #22c55e; font-weight: bold; }
+        .log-loss { color: #ef4444; font-weight: bold; }
+        .log-warn { color: #eab308; }
+
+        .prob-bar-container {
+            display: flex;
+            height: 26px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #0f172a;
+            margin-top: 10px;
+            border: 1px solid #334155;
+        }
+        .prob-segment {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: white;
+            transition: width 0.5s ease;
+        }
+        .bg-casa { background: #3b82f6; }
+        .bg-empate { background: #64748b; }
+        .bg-fora { background: #e11d48; }
+
+        select.form-control, input.form-control {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            background: #0f172a;
+            color: white;
+            border: 1px solid #334155;
+            margin-top: 5px;
+        }
+
+        /* Estilos da Tabela dos Próximos 10 Jogos */
+        .tabela-jogos {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 0.85rem;
+        }
+        .tabela-jogos th, .tabela-jogos td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #334155;
+        }
+        .tabela-jogos th {
+            background: #0f172a;
+            color: #94a3b8;
+        }
+        .badge-liga {
+            background: #334155;
+            color: #38bdf8;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+    </style>
 </head>
 <body>
 
@@ -13,80 +116,433 @@
         <div class="logo-area">
             <div class="logo-circle">RI</div>
             <div>
-                <h1>Robô de Operações</h1>
-                <p>Gerenciamento e automação de entradas</p>
+                <h1>Robô de Análise Esportiva</h1>
+                <p>Análise de probabilidade em tempo real via TheSportsDB API</p>
             </div>
         </div>
     </header>
 
-    <!-- Conteúdo principal envelopado no .container -->
+    <!-- Conteúdo principal -->
     <main class="container">
         
-        <!-- Seção de Status do Robô -->
+        <!-- Dashboard da Banca -->
+        <div class="grid-dashboard">
+            <div class="stat-card">
+                <span class="label">Banca / Saldo</span>
+                <span class="value text-blue" id="disp-saldo">R$ 1.000,00</span>
+            </div>
+            <div class="stat-card">
+                <span class="label">Lucro / Prejuízo</span>
+                <span class="value" id="disp-lucro">R$ 0,00</span>
+            </div>
+            <div class="stat-card">
+                <span class="label">Placar (Green / Red)</span>
+                <span class="value"><span class="text-green" id="disp-wins">0</span> x <span class="text-red" id="disp-losses">0</span></span>
+            </div>
+            <div class="stat-card">
+                <span class="label">Assertividade</span>
+                <span class="value text-blue" id="disp-winrate">0%</span>
+            </div>
+        </div>
+
+        <!-- NOVO: Lista Multiliga dos Próximos 10 Jogos -->
+        <section class="card" style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <h2>Radar de Próximos Jogos (Todos os Campeonatos)</h2>
+                <button type="button" class="btn btn-secondary" id="btn-carregar-radar" style="font-size: 0.8rem; padding: 6px 12px;">Atualizar Radar</button>
+            </div>
+            <p style="font-size: 0.85rem; color: #94a3b8; margin-top: 5px;">
+                Lista consolidada das próximas partidas agendadas em diversos campeonatos.
+            </p>
+
+            <div style="overflow-x: auto;">
+                <table class="tabela-jogos">
+                    <thead>
+                        <tr>
+                            <th>Liga</th>
+                            <th>Confronto</th>
+                            <th>Data / Hora</th>
+                            <th>Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody id="corpo-tabela-radar">
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: #94a3b8;">Carregando próximas partidas de todos os campeonatos...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 1. Seleção Manual por Campeonato -->
         <section class="card">
-            <h2>Status do Robô</h2>
-            <div class="status-grid">
-                <div class="status-item">
-                    <span class="label">Estado atual:</span>
-                    <span class="badge badge-success" id="robot-status">Ativo</span>
-                </div>
-                <div class="status-item">
-                    <span class="label">Modo:</span>
-                    <span id="robot-mode">Simulação</span>
-                </div>
-            </div>
-            
-            <div class="acoes-grid" style="margin-top: 20px;">
-                <button type="button" class="btn btn-primary" id="btn-iniciar">Iniciar Robô</button>
-                <button type="button" class="btn btn-danger" id="btn-parar">Parar Robô</button>
-            </div>
-        </section>
+            <h2>1. Filtrar Jogos por Liga</h2>
+            <p style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 15px;">
+                Selecione o campeonato para carregar a lista completa de jogos específicos.
+            </p>
 
-        <!-- Seção de Configurações -->
-        <section class="card" style="margin-top: 20px;">
-            <h2>Configurações do Robô</h2>
-            <form id="form-config-robo">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px;">
                 <div class="form-group">
-                    <label for="payout-minimo">Payout Mínimo (%)</label>
-                    <input type="number" id="payout-minimo" name="payout-minimo" class="form-control" value="80">
+                    <label for="select-liga">Campeonato / Liga</label>
+                    <select id="select-liga" class="form-control">
+                        <option value="4351">Brazilian Serie A (Brasileirão)</option>
+                        <option value="4328">English Premier League</option>
+                        <option value="4335">Spanish La Liga</option>
+                        <option value="4331">German Bundesliga</option>
+                        <option value="4332">Italian Serie A</option>
+                        <option value="4334">French Ligue 1</option>
+                    </select>
                 </div>
 
-                <div class="form-group" style="margin-top: 15px;">
-                    <label for="val-entrada">Valor Base da Entrada (R$)</label>
-                    <input type="number" id="val-entrada" name="val-entrada" class="form-control" value="10">
+                <div class="form-group">
+                    <label for="select-jogo">Jogos do Campeonato</label>
+                    <select id="select-jogo" class="form-control">
+                        <option value="">Aguardando busca de jogos...</option>
+                    </select>
                 </div>
+            </div>
 
-                <div class="form-group" style="margin-top: 15px;">
-                    <label for="stop-loss">Stop Loss (R$)</label>
-                    <input type="number" id="stop-loss" name="stop-loss" class="form-control" value="50">
-                </div>
-
-                <div class="form-group" style="margin-top: 15px;">
-                    <label for="stop-gain">Stop Gain (R$)</label>
-                    <input type="number" id="stop-gain" name="stop-gain" class="form-control" value="100">
-                </div>
-
-                <div style="margin-top: 20px;">
-                    <button type="submit" class="btn btn-primary">Salvar Configurações</button>
-                </div>
-            </form>
-        </section>
-
-        <!-- Seção de Logs de Operação -->
-        <section class="card" style="margin-top: 20px;">
-            <h2>Logs de Execução</h2>
-            <div id="log-container" class="log-box">
-                <p class="log-item">[06:00:00] Sistema inicializado com sucesso.</p>
-                <p class="log-item">[06:00:05] Conectado ao servidor de sinais...</p>
+            <div style="margin-top: 15px;">
+                <button type="button" class="btn btn-primary" id="btn-analisar-jogo" style="width: 100%;" disabled>Analisar Probabilidades do Jogo Selecionado</button>
             </div>
         </section>
 
-        <!-- Navegação de volta -->
-        <div style="margin-top: 20px; text-align: center;">
+        <!-- 2. Painel de Probabilidades Calculadas -->
+        <section class="card" style="margin-top: 20px;">
+            <h2>2. Análise de Probabilidade do Robô</h2>
+            <div id="resultado-analise">
+                <p style="font-size: 0.9rem; color: #94a3b8;">Selecione um jogo e clique em "Analisar Probabilidades".</p>
+            </div>
+
+            <div class="prob-bar-container" id="bar-container" style="display: none;">
+                <div class="prob-segment bg-casa" id="bar-casa" style="width: 33.3%;">0%</div>
+                <div class="prob-segment bg-empate" id="bar-empate" style="width: 33.3%;">0%</div>
+                <div class="prob-segment bg-fora" id="bar-fora" style="width: 33.3%;">0%</div>
+            </div>
+
+            <div id="sugestao-robo" style="margin-top: 15px; display: none; padding: 12px; background: #0f172a; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                <strong>Sugestão de Entrada do Robô:</strong>
+                <p id="texto-sugestao" style="margin: 5px 0 0 0; font-size: 0.95rem; color: #38bdf8;"></p>
+            </div>
+
+            <div class="form-group" style="margin-top: 15px;">
+                <label for="val-aposta">Valor da Entrada (R$)</label>
+                <input type="number" id="val-aposta" class="form-control" value="20" min="1">
+            </div>
+
+            <div style="margin-top: 15px;">
+                <button type="button" class="btn btn-primary" id="btn-simular-jogo" disabled>Simular Entrada neste Jogo</button>
+            </div>
+        </section>
+
+        <!-- Console de Histórico de Operações -->
+        <section class="card" style="margin-top: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h2 style="margin: 0;">Logs do Robô</h2>
+                <button type="button" class="btn btn-secondary" id="btn-limpar-log" style="padding: 4px 10px; font-size: 0.8rem;">Limpar Console</button>
+            </div>
+            <div id="log-container" class="log-box">
+                <p class="log-item log-info">[00:00:00] Robô inicializado. Conectando à API do TheSportsDB...</p>
+            </div>
+        </section>
+
+        <!-- Navegação -->
+        <div style="margin-top: 20px; margin-bottom: 30px; text-align: center;">
             <a href="index.html" class="btn btn-secondary">Voltar ao Início</a>
         </div>
 
     </main>
 
+    <script>
+        let bancaInicial = 1000;
+        let saldo = 1000;
+        let wins = 0;
+        let losses = 0;
+        let jogosCarregados = [];
+        let analiseAtual = null;
+
+        const ligasDisponiveis = [
+            { id: "4351", nome: "Brasileirão" },
+            { id: "4328", nome: "Premier League" },
+            { id: "4335", nome: "La Liga" },
+            { id: "4331", nome: "Bundesliga" },
+            { id: "4332", nome: "Serie A (ITA)" }
+        ];
+
+        function tocarSom(tipo) {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                if (tipo === 'win') {
+                    osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+                    osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.25);
+                } else if (tipo === 'loss') {
+                    osc.frequency.setValueAtTime(311.13, ctx.currentTime);
+                    osc.frequency.setValueAtTime(233.08, ctx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.25);
+                }
+            } catch (e) {}
+        }
+
+        function adicionarLog(mensagem, tipo = 'info') {
+            const container = document.getElementById('log-container');
+            const hora = new Date().toLocaleTimeString();
+            const p = document.createElement('p');
+            p.className = `log-item log-${tipo}`;
+            p.innerText = `[${hora}] ${mensagem}`;
+            container.appendChild(p);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function atualizarDashboard() {
+            const lucro = saldo - bancaInicial;
+            const total = wins + losses;
+            const winrate = total > 0 ? ((wins / total) * 100).toFixed(1) : 0;
+
+            document.getElementById('disp-saldo').innerText = `R$ ${saldo.toFixed(2)}`;
+            
+            const elemLucro = document.getElementById('disp-lucro');
+            elemLucro.innerText = `R$ ${lucro.toFixed(2)}`;
+            elemLucro.className = `value ${lucro >= 0 ? 'text-green' : 'text-red'}`;
+
+            document.getElementById('disp-wins').innerText = wins;
+            document.getElementById('disp-losses').innerText = losses;
+            document.getElementById('disp-winrate').innerText = `${winrate}%`;
+        }
+
+        // Buscar a lista unificada dos próximos 10 jogos de todas as ligas
+        async function carregarRadar10Jogos() {
+            const tabelaCorpo = document.getElementById('corpo-tabela-radar');
+            tabelaCorpo.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #94a3b8;">Buscando dados das ligas na API...</td></tr>';
+
+            let jogosUnificados = [];
+
+            for (const liga of ligasDisponiveis) {
+                try {
+                    const url = `https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=${liga.id}`;
+                    const res = await fetch(url);
+                    const dados = await res.json();
+
+                    if (dados && dados.events) {
+                        dados.events.slice(0, 3).forEach(evt => {
+                            jogosUnificados.push({
+                                ligaNome: liga.nome,
+                                home: evt.strHomeTeam,
+                                away: evt.strAwayTeam,
+                                data: evt.dateEvent ? evt.dateEvent.split('-').reverse().join('/') : 'Em breve',
+                                hora: evt.strTime ? evt.strTime.substring(0, 5) : ''
+                            });
+                        });
+                    }
+                } catch (e) {
+                    console.error("Erro ao buscar liga " + liga.nome, e);
+                }
+            }
+
+            // Seleciona até 10 jogos
+            const proximos10 = jogosUnificados.slice(0, 10);
+
+            if (proximos10.length === 0) {
+                tabelaCorpo.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #94a3b8;">Nenhum jogo retornado no momento.</td></tr>';
+                return;
+            }
+
+            tabelaCorpo.innerHTML = '';
+            proximos10.forEach((item, i) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><span class="badge-liga">${item.ligaNome}</span></td>
+                    <td><strong>${item.home}</strong> x <strong>${item.away}</strong></td>
+                    <td>${item.data} ${item.hora}</td>
+                    <td><button class="btn btn-primary" style="font-size:0.75rem; padding:4px 8px;" onclick="analisarDiretoDoRadar('${item.home}', '${item.away}')">Analisar</button></td>
+                `;
+                tabelaCorpo.appendChild(tr);
+            });
+
+            adicionarLog(`Radar: Lista dos 10 próximos jogos atualizada com sucesso.`, 'info');
+        }
+
+        // Função para acionar a análise ao clicar no botão da tabela do Radar
+        window.analisarDiretoDoRadar = function(home, away) {
+            executarAnalise(home, away);
+        };
+
+        // Buscar jogos de uma liga específica
+        async function buscarProximosJogos(idLiga) {
+            const selectJogo = document.getElementById('select-jogo');
+            const btnAnalisar = document.getElementById('btn-analisar-jogo');
+            selectJogo.innerHTML = '<option value="">Carregando jogos da API...</option>';
+            btnAnalisar.disabled = true;
+
+            try {
+                let url = `https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=${idLiga}`;
+                let resposta = await fetch(url);
+                let dados = await resposta.json();
+
+                let listaEventos = dados && dados.events ? dados.events : [];
+
+                if (listaEventos.length < 10) {
+                    const urlMaisJogos = `https://www.thesportsdb.com/api/v1/json/3/eventspastleague.php?id=${idLiga}`;
+                    const respMais = await fetch(urlMaisJogos);
+                    const dadosMais = await respMais.json();
+                    
+                    if (dadosMais && dadosMais.events) {
+                        listaEventos = [...listaEventos, ...dadosMais.events];
+                    }
+                }
+
+                selectJogo.innerHTML = '';
+
+                if (listaEventos.length > 0) {
+                    jogosCarregados = listaEventos;
+
+                    jogosCarregados.forEach((event, index) => {
+                        const opt = document.createElement('option');
+                        opt.value = index;
+                        const dataFormatada = event.dateEvent ? event.dateEvent.split('-').reverse().join('/') : 'Em breve';
+                        const horaFormatada = event.strTime ? ` às ${event.strTime.substring(0, 5)}` : '';
+                        opt.innerText = `${event.strHomeTeam} x ${event.strAwayTeam} (${dataFormatada}${horaFormatada})`;
+                        selectJogo.appendChild(opt);
+                    });
+
+                    btnAnalisar.disabled = false;
+                    adicionarLog(`API: ${jogosCarregados.length} partidas carregadas para a liga.`, 'info');
+                } else {
+                    selectJogo.innerHTML = '<option value="">Nenhum jogo encontrado nesta liga</option>';
+                }
+            } catch (erro) {
+                console.error(erro);
+                selectJogo.innerHTML = '<option value="">Erro ao carregar jogos</option>';
+            }
+        }
+
+        function calcularProbabilidades(homeTeam, awayTeam) {
+            let baseHome = 45;
+            let baseDraw = 28;
+            let baseAway = 27;
+
+            const diff = (homeTeam.length - awayTeam.length) * 2;
+            baseHome += diff;
+            baseAway -= diff;
+
+            const soma = baseHome + baseDraw + baseAway;
+            const probCasa = Math.round((baseHome / soma) * 100);
+            const probEmpate = Math.round((baseDraw / soma) * 100);
+            const probFora = 100 - probCasa - probEmpate;
+
+            return { probCasa, probEmpate, probFora };
+        }
+
+        function executarAnalise(homeTeam, awayTeam) {
+            const { probCasa, probEmpate, probFora } = calcularProbabilidades(homeTeam, awayTeam);
+
+            document.getElementById('bar-container').style.display = 'flex';
+            document.getElementById('bar-casa').style.width = `${probCasa}%`;
+            document.getElementById('bar-casa').innerText = `${homeTeam} (${probCasa}%)`;
+            
+            document.getElementById('bar-empate').style.width = `${probEmpate}%`;
+            document.getElementById('bar-empate').innerText = `Empate (${probEmpate}%)`;
+            
+            document.getElementById('bar-fora').style.width = `${probFora}%`;
+            document.getElementById('bar-fora').innerText = `${awayTeam} (${probFora}%)`;
+
+            let escolha = "";
+            let probEscolhida = 0;
+            if (probCasa >= probEmpate && probCasa >= probFora) {
+                escolha = `Vitória do ${homeTeam}`;
+                probEscolhida = probCasa;
+            } else if (probFora >= probCasa && probFora >= probEmpate) {
+                escolha = `Vitória do ${awayTeam}`;
+                probEscolhida = probFora;
+            } else {
+                escolha = `Empate`;
+                probEscolhida = probEmpate;
+            }
+
+            const oddCalculada = (100 / probEscolhida).toFixed(2);
+
+            analiseAtual = { 
+                homeTeam, 
+                awayTeam, 
+                escolha, 
+                probCasa, 
+                probEmpate, 
+                probFora, 
+                odd: oddCalculada 
+            };
+
+            document.getElementById('sugestao-robo').style.display = 'block';
+            document.getElementById('texto-sugestao').innerText = 
+                `${escolha} @ Odd ${oddCalculada} (Confiança calculada: ${probEscolhida}%)`;
+
+            document.getElementById('btn-simular-jogo').disabled = false;
+            adicionarLog(`Análise feita para ${homeTeam} x ${awayTeam}. Sugestão: ${escolha}`, 'info');
+        }
+
+        // Eventos da Tela
+        document.getElementById('btn-carregar-radar').addEventListener('click', carregarRadar10Jogos);
+
+        document.getElementById('select-liga').addEventListener('change', (e) => {
+            buscarProximosJogos(e.target.value);
+        });
+
+        document.getElementById('btn-analisar-jogo').addEventListener('click', () => {
+            const indexJogo = document.getElementById('select-jogo').value;
+            if (indexJogo === "") return;
+
+            const jogo = jogosCarregados[indexJogo];
+            executarAnalise(jogo.strHomeTeam, jogo.strAwayTeam);
+        });
+
+        document.getElementById('btn-simular-jogo').addEventListener('click', () => {
+            if (!analiseAtual) return;
+
+            const valorAposta = parseFloat(document.getElementById('val-aposta').value) || 20;
+            const rand = Math.random() * 100;
+            let resultadoReal = "";
+
+            if (rand < analiseAtual.probCasa) {
+                resultadoReal = `Vitória do ${analiseAtual.homeTeam}`;
+            } else if (rand < (analiseAtual.probCasa + analiseAtual.probEmpate)) {
+                resultadoReal = `Empate`;
+            } else {
+                resultadoReal = `Vitória do ${analiseAtual.awayTeam}`;
+            }
+
+            const deuWin = (resultadoReal === analiseAtual.escolha);
+
+            if (deuWin) {
+                const lucro = valorAposta * (parseFloat(analiseAtual.odd) - 1);
+                saldo += lucro;
+                wins++;
+                tocarSom('win');
+                adicionarLog(`GREEN! Resultado: ${resultadoReal}. Aposta em "${analiseAtual.escolha}" bateu! Lucro: +R$ ${lucro.toFixed(2)}`, 'win');
+            } else {
+                saldo -= valorAposta;
+                losses++;
+                tocarSom('loss');
+                adicionarLog(`RED! Resultado: ${resultadoReal}. Aposta em "${analiseAtual.escolha}" perdeu. Perda: -R$ ${valorAposta.toFixed(2)}`, 'loss');
+            }
+
+            atualizarDashboard();
+        });
+
+        document.getElementById('btn-limpar-log').addEventListener('click', () => {
+            document.getElementById('log-container').innerHTML = '';
+        });
+
+        // Inicializa o Radar e o Select do Brasileirão ao carregar a página
+        buscarProximosJogos("4351");
+        carregarRadar10Jogos();
+    </script>
 </body>
 </html>

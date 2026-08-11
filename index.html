@@ -5,6 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Race Inteligente LIVE Cloud</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Estilos do Radar de Próximos Jogos */
+        .tabela-jogos {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 0.85rem;
+        }
+        .tabela-jogos th, .tabela-jogos td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border, #334155);
+        }
+        .tabela-jogos th {
+            background: #0f172a;
+            color: #94a3b8;
+        }
+        .badge-liga {
+            background: #334155;
+            color: #38bdf8;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+    </style>
 </head>
 <body>
 
@@ -47,8 +72,45 @@
         </div>
     </section>
 
-    <!-- NAVEGAÇÃO -->
+    <!-- RADAR DE PRÓXIMOS JOGOS (SUPERIOR) -->
+    <section class="card" style="margin-top: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <h2>Radar de Próximos Jogos (Todos os Campeonatos)</h2>
+            <button type="button" class="btn btn-primary" id="btn-atualizar-radar-index" style="font-size: 0.8rem; padding: 6px 12px;">Atualizar Radar</button>
+        </div>
+        <p style="font-size: 0.85rem; color: #94a3b8; margin-top: 5px;">
+            Lista consolidada das próximas partidas agendadas em diversos campeonatos.
+        </p>
+
+        <div style="overflow-x: auto;">
+            <table class="tabela-jogos">
+                <thead>
+                    <tr>
+                        <th>Liga</th>
+                        <th>Confronto</th>
+                        <th>Data / Hora</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody id="corpo-tabela-radar-index">
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: #94a3b8;">Carregando próximas partidas de todos os campeonatos...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- NAVEGAÇÃO DO SISTEMA -->
     <section class="menu-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-top: 20px;">
+        
+        <a href="robo.html" class="card-link" style="text-decoration:none; color:inherit;">
+            <div class="card" style="border-color: #3b82f6;">
+                <h3 style="color: #38bdf8;">🤖 Robô de Análise Esportiva</h3>
+                <p style="color: #94a3b8; font-size: 0.9rem;">Probabilidades via API, simulador de apostas e radar de jogos.</p>
+            </div>
+        </a>
+
         <a href="entradas.html" class="card-link" style="text-decoration:none; color:inherit;">
             <div class="card">
                 <h3>Entradas para Analisar</h3>
@@ -83,12 +145,14 @@
                 <p style="color: #94a3b8; font-size: 0.9rem;">Estatísticas, IQP, ROI e desempenho do método.</p>
             </div>
         </a>
+
         <a href="calculadora.html" class="card-link" style="text-decoration:none; color:inherit;">
             <div class="card">
                 <h3>Calculadora IQP</h3>
                 <p style="color: #94a3b8; font-size: 0.9rem;">Calcule o Índice de Qualidade de Previsão.</p>
             </div>
         </a>
+
         <a href="dashboardvivo.html" class="card-link" style="text-decoration:none; color:inherit;">
             <div class="card">
                 <h3>Dashboard ao Vivo</h3>
@@ -105,6 +169,70 @@
 
 <script src="js/app.js"></script>
 
+<!-- Script para carregar a Tabela do Radar Multiliga -->
+<script>
+    const ligasRadar = [
+        { id: "4351", nome: "Brasileirão" },
+        { id: "4328", nome: "Premier League" },
+        { id: "4335", nome: "La Liga" },
+        { id: "4331", nome: "Bundesliga" },
+        { id: "4332", nome: "Serie A (ITA)" }
+    ];
+
+    async function carregarRadarIndex() {
+        const tabelaCorpo = document.getElementById('corpo-tabela-radar-index');
+        tabelaCorpo.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #94a3b8;">Buscando dados das ligas na API...</td></tr>';
+
+        let jogosUnificados = [];
+
+        for (const liga of ligasRadar) {
+            try {
+                const url = `https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=${liga.id}`;
+                const res = await fetch(url);
+                const dados = await res.json();
+
+                if (dados && dados.events) {
+                    dados.events.slice(0, 3).forEach(evt => {
+                        jogosUnificados.push({
+                            ligaNome: liga.nome,
+                            home: evt.strHomeTeam,
+                            away: evt.strAwayTeam,
+                            data: evt.dateEvent ? evt.dateEvent.split('-').reverse().join('/') : 'Em breve',
+                            hora: evt.strTime ? evt.strTime.substring(0, 5) : ''
+                        });
+                    });
+                }
+            } catch (e) {
+                console.error("Erro ao buscar liga " + liga.nome, e);
+            }
+        }
+
+        const proximos10 = jogosUnificados.slice(0, 10);
+
+        if (proximos10.length === 0) {
+            tabelaCorpo.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #94a3b8;">Nenhum jogo retornado no momento.</td></tr>';
+            return;
+        }
+
+        tabelaCorpo.innerHTML = '';
+        proximos10.forEach((item) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><span class="badge-liga">${item.ligaNome}</span></td>
+                <td><strong>${item.home}</strong> x <strong>${item.away}</strong></td>
+                <td>${item.data} ${item.hora}</td>
+                <td><a href="robo.html" class="btn btn-primary" style="font-size:0.75rem; padding:4px 8px; text-decoration:none;">Analisar</a></td>
+            `;
+            tabelaCorpo.appendChild(tr);
+        });
+    }
+
+    document.getElementById('btn-atualizar-radar-index').addEventListener('click', carregarRadarIndex);
+    
+    // Executa ao carregar
+    carregarRadarIndex();
+</script>
+
 <!-- Módulo para carregar a última análise do Firestore no Painel LIVE -->
 <script type="module">
     import { db } from './js/firebase-config.js';
@@ -118,7 +246,6 @@
 
     async function atualizarPainelLiveNuvem() {
         try {
-            // Busca a última análise cadastrada no Firestore ordenada pela criação
             const q = query(collection(db, "ri_historico"), orderBy("criadoEm", "desc"), limit(1));
             const querySnapshot = await getDocs(q);
 
@@ -130,7 +257,6 @@
                 document.getElementById("iqpPainel").textContent = ultimaAnalise.iqp || "--";
                 document.getElementById("entradaPainel").textContent = ultimaAnalise.jogo || "--";
 
-                // Aplica cor diferente dependendo do status
                 const statusEl = document.getElementById("statusPainel");
                 if (ultimaAnalise.classificacao === "PREMIUM") statusEl.style.color = "#22c55e";
                 else if (ultimaAnalise.classificacao === "FORTE") statusEl.style.color = "#3b82f6";
@@ -138,7 +264,6 @@
                 else statusEl.style.color = "#ef4444";
 
             } else {
-                // Caso não tenha nenhum registro no banco ainda
                 document.getElementById("statusPainel").textContent = "Aguardando";
                 document.getElementById("minutoPainel").textContent = "--";
                 document.getElementById("iqpPainel").textContent = "--";
@@ -146,19 +271,17 @@
             }
         } catch (error) {
             console.error("Erro ao carregar dados do Painel LIVE:", error);
-            // Fallback caso o índice de ordenação do Firestore ainda não esteja criado
             fallbackSemOrdenacao();
         }
     }
 
-    // Função de garantia caso o orderBy ainda não tenha índice no Firestore
     async function fallbackSemOrdenacao() {
         try {
             const querySnapshot = await getDocs(collection(db, "ri_historico"));
             if (!querySnapshot.empty) {
                 const docs = [];
                 querySnapshot.forEach(doc => docs.push(doc.data()));
-                const ultima = docs[docs.length - 1]; // Pega o último da lista
+                const ultima = docs[docs.length - 1];
 
                 document.getElementById("statusPainel").textContent = ultima.classificacao || "Analisado";
                 document.getElementById("minutoPainel").textContent = (ultima.minuto || "--") + "'";
@@ -170,7 +293,6 @@
         }
     }
 
-    // Executa na abertura da tela
     atualizarPainelLiveNuvem();
 </script>
 
