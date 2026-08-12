@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Race Inteligente LIVE - Dashboard</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Race Inteligente LIVE - Dashboard ao Vivo</title>
+    <link rel="stylesheet" href="css/style.css">
     <style>
         :root {
             --bg-primary: #0f172a;
@@ -35,7 +35,7 @@
 
         .container {
             width: 100%;
-            max-width: 1000px;
+            max-width: 1100px;
         }
 
         header {
@@ -102,23 +102,24 @@
 
 <div class="container">
     <header>
-        <h1>📊 Dashboard & Previsões</h1>
-        <a href="index.html" class="nav-btn">⬅️ Voltar para Calculadora</a>
+        <h1>📊 Dashboard & Previsões ao Vivo</h1>
+        <a href="index.html" class="nav-btn">⬅️ Voltar ao Painel</a>
     </header>
 
     <main>
-        <!-- SEÇÃO: PRÓXIMOS JOGOS (PREMIER LEAGUE + FIRESTORE) -->
+        <!-- SEÇÃO: PRÓXIMOS JOGOS (API MULTILIGA + FIRESTORE) -->
         <section class="card">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                <h2>🎯 Oportunidades Próximas - Premier League</h2>
-                <span id="statusCarregamentoPL" style="font-size: 0.85rem; color: var(--accent-blue);">Analisando cruzamento de dados...</span>
+                <h2>🎯 Oportunidades Próximas (Radar Multiliga)</h2>
+                <span id="statusCarregamentoPL" style="font-size: 0.85rem; color: var(--accent-blue);">Buscando dados da API...</span>
             </div>
             <p style="color: var(--text-muted); margin-top: 5px; font-size: 0.85rem;">
-                Análise preditiva baseada nas médias dos times gravadas no seu histórico.
+                Cruzamento em tempo real das próximas partidas agendadas com as médias do seu banco de dados no Firestore.
             </p>
 
             <div id="containerProximosJogosPL" class="grid-proximos">
-                <!-- Cards renderizados dinamicamente pelo JS -->
+                <!-- Cards renderizados dinamicamente pelo JS via API -->
+                <p style="color: var(--text-muted); grid-column: 1/-1;">Carregando próximas partidas...</p>
             </div>
         </section>
 
@@ -138,7 +139,7 @@
                         </tr>
                     </thead>
                     <tbody id="tabelaHistorico">
-                        <!-- Linhas da tabela preenchidas pelo JS -->
+                        <!-- Linhas da tabela preenchidas pelo JS via Firestore -->
                     </tbody>
                 </table>
             </div>
@@ -150,13 +151,43 @@
     import { db } from './js/firebase-config.js';
     import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
-    // Simulação da lista de jogos da rodada (Pronta para ligar no fetch da API)
-    const proximosJogosPL = [
-        { mandante: "Arsenal", visitante: "Everton", data: "Hoje" },
-        { mandante: "Manchester City", visitante: "Wolves", data: "Amanhã" },
-        { mandante: "Liverpool", visitante: "Bournemouth", data: "Amanhã" },
-        { mandante: "Chelsea", visitante: "Fulham", data: "Domingo" }
+    // Configuração das Ligas suportadas pela API do TheSportsDB
+    const ligasRadar = [
+        { id: "4351", nome: "Brasileirão" },
+        { id: "4328", nome: "Premier League" },
+        { id: "4335", nome: "La Liga" },
+        { id: "4331", nome: "Bundesliga" },
+        { id: "4332", nome: "Serie A (ITA)" }
     ];
+
+    // Busca os próximos jogos em todas as ligas configuradas
+    async function buscarProximosJogosAPI() {
+        let jogosUnificados = [];
+
+        for (const liga of ligasRadar) {
+            try {
+                const url = `https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=${liga.id}`;
+                const res = await fetch(url);
+                const dados = await res.json();
+
+                if (dados && dados.events) {
+                    dados.events.slice(0, 2).forEach(evt => {
+                        jogosUnificados.push({
+                            ligaNome: liga.nome,
+                            mandante: evt.strHomeTeam,
+                            visitante: evt.strAwayTeam,
+                            data: evt.dateEvent ? evt.dateEvent.split('-').reverse().join('/') : 'Em breve',
+                            hora: evt.strTime ? evt.strTime.substring(0, 5) : ''
+                        });
+                    });
+                }
+            } catch (e) {
+                console.error("Erro ao buscar liga " + liga.nome, e);
+            }
+        }
+
+        return jogosUnificados;
+    }
 
     async function carregarDashboard() {
         const statusText = document.getElementById("statusCarregamentoPL");
@@ -176,29 +207,38 @@
                 // Preenche a tabela do histórico
                 const tr = document.createElement("tr");
                 tr.innerHTML = `
-                    <td><strong>${item.jogo}</strong></td>
-                    <td>${item.posse}%</td>
-                    <td>${item.ataquesPerigosos}</td>
-                    <td>${item.finalizacoes} / ${item.noAlvo}</td>
-                    <td><span class="badge-iqp" style="background:#3b82f620; color:#3b82f6; border:1px solid #3b82f6;">${item.iqp} pts</span></td>
-                    <td style="color:#22c55e; font-weight:bold;">${item.apostaSugerida}</td>
+                    <td><strong>${item.jogo || '--'}</strong></td>
+                    <td>${item.posse || 0}%</td>
+                    <td>${item.ataquesPerigosos || 0}</td>
+                    <td>${item.finalizacoes || 0} / ${item.noAlvo || 0}</td>
+                    <td><span class="badge-iqp" style="background:#3b82f620; color:#3b82f6; border:1px solid #3b82f6;">${item.iqp || 0} pts</span></td>
+                    <td style="color:#22c55e; font-weight:bold;">${item.apostaSugerida || item.classificacao || '--'}</td>
                 `;
                 tabela.appendChild(tr);
             });
 
-            // 2. Processa a Análise Preditiva para cada jogo da rodada
+            // 2. Busca os próximos jogos direto da API
+            statusText.textContent = "Buscando jogos agendados...";
+            const proximosJogos = await buscarProximosJogosAPI();
+
+            if (proximosJogos.length === 0) {
+                containerProximos.innerHTML = `<p style="color: var(--text-muted); grid-column: 1/-1;">Nenhum jogo agendado retornado pela API no momento.</p>`;
+                statusText.textContent = "Atualizado (Sem jogos na API)";
+                statusText.style.color = "#f59e0b";
+                return;
+            }
+
+            // 3. Processa a Análise Preditiva para cada jogo retornado pela API
             containerProximos.innerHTML = "";
-            proximosJogosPL.forEach(jogo => {
+            proximosJogos.forEach(jogo => {
+                // Filtra no Firestore partidas onde o mandante participou
                 const historicoMandante = historico.filter(h => h.jogo && h.jogo.toLowerCase().includes(jogo.mandante.toLowerCase()));
                 
                 let mediaIQP = 0;
-                let mediaCantos = 0;
 
                 if (historicoMandante.length > 0) {
                     const somaIQP = historicoMandante.reduce((acc, curr) => acc + Number(curr.iqp || 0), 0);
-                    const somaCantos = historicoMandante.reduce((acc, curr) => acc + Number(curr.escanteios || 0), 0);
                     mediaIQP = (somaIQP / historicoMandante.length).toFixed(0);
-                    mediaCantos = (somaCantos / historicoMandante.length).toFixed(1);
                 }
 
                 let recomendacao = "⚪ AGUARDAR AO VIVO (Poucos Dados)";
@@ -221,8 +261,8 @@
                 card.style.cssText = "background: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #334155;";
                 card.innerHTML = `
                     <div style="display:flex; justify-content:space-between; margin-bottom: 8px;">
-                        <span style="font-size: 0.75rem; color: #94a3b8; font-weight: bold;">PREMIER LEAGUE</span>
-                        <span style="font-size: 0.75rem; color: #f59e0b;">${jogo.data}</span>
+                        <span style="font-size: 0.75rem; color: #38bdf8; font-weight: bold;">${jogo.ligaNome}</span>
+                        <span style="font-size: 0.75rem; color: #f59e0b;">${jogo.data} ${jogo.hora}</span>
                     </div>
                     <h3 style="font-size: 1rem; margin-bottom: 10px;">${jogo.mandante} x ${jogo.visitante}</h3>
                     <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 10px;">Amostra: ${historicoMandante.length} jogo(s) | IQP Médio: ${mediaIQP} pts</p>
@@ -233,12 +273,12 @@
                 containerProximos.appendChild(card);
             });
 
-            statusText.textContent = "Atualizado em tempo real";
+            statusText.textContent = "Atualizado em tempo real via API";
             statusText.style.color = "#22c55e";
 
         } catch (e) {
-            console.error(e);
-            statusText.textContent = "Erro ao carregar do Firestore.";
+            console.error("Erro no carregamento do Dashboard:", e);
+            statusText.textContent = "Erro ao carregar dados.";
             statusText.style.color = "#ef4444";
         }
     }

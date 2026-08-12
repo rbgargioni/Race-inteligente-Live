@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultados Brasileirão Série A</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --border-color: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .nav-btn {
+            background-color: var(--accent-blue);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .lista-resultados {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .item-jogo {
+            background-color: #0f172a;
+            border: 1px solid var(--border-color);
+            padding: 12px 16px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.95rem;
+        }
+
+        .confronto {
+            font-weight: 600;
+        }
+
+        .placar {
+            background-color: #334155;
+            color: var(--accent-green);
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .data-jogo {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div>
+            <h1>🇧🇷 Resultados do Brasileirão Série A</h1>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">
+                Jogos finalizados da temporada atual
+            </p>
+        </div>
+        <a href="index.html" class="nav-btn">⬅️ Voltar ao Painel</a>
+    </header>
+
+    <main>
+        <section class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <h2>Partidas Encerradas</h2>
+                <span id="statusCarregamento" style="font-size: 0.85rem; color: var(--accent-blue);">Buscando resultados da temporada...</span>
+            </div>
+
+            <div id="listaResultados" class="lista-resultados">
+                <p style="color: var(--text-muted); text-align: center; padding: 20px;">Carregando histórico de partidas...</p>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script>
+    async function carregarResultadosBrasileirao() {
+        const statusText = document.getElementById("statusCarregamento");
+        const listaContainer = document.getElementById("listaResultados");
+
+        try {
+            // Busca todos os eventos da temporada do Brasileirão (ID: 4351)
+            const anoAtual = new Date().getFullYear();
+            let url = `https://www.thesportsdb.com/api/v1/json/3/eventsseason.php?id=4351&s=${anoAtual}`;
+            let response = await fetch(url);
+            let data = await response.json();
+
+            // Fallback para buscar a última temporada caso a atual ainda não possua jogos retornados
+            if (!data || !data.events || data.events.length === 0) {
+                url = `https://www.thesportsdb.com/api/v1/json/3/eventspastleague.php?id=4351`;
+                response = await fetch(url);
+                data = await response.json();
+            }
+
+            if (!data || !data.events || data.events.length === 0) {
+                listaContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 20px;">Nenhum jogo encontrado para esta temporada.</p>';
+                statusText.textContent = "Sem dados";
+                return;
+            }
+
+            // Filtra somente os jogos que já foram encerrados (que contêm placar)
+            const jogosEncerrados = data.events.filter(evt => evt.intHomeScore !== null && evt.intHomeScore !== "");
+
+            if (jogosEncerrados.length === 0) {
+                listaContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 20px;">Nenhum jogo finalizado com placar registrado até o momento.</p>';
+                statusText.textContent = "0 jogos finalizados";
+                return;
+            }
+
+            // Ordena os jogos do mais recente para o mais antigo
+            jogosEncerrados.sort((a, b) => new Date(b.dateEvent) - new Date(a.dateEvent));
+
+            listaContainer.innerHTML = "";
+
+            jogosEncerrados.forEach(evt => {
+                const homeTeam = evt.strHomeTeam;
+                const awayTeam = evt.strAwayTeam;
+                const homeScore = evt.intHomeScore;
+                const awayScore = evt.intAwayScore;
+                const dataFormatada = evt.dateEvent ? evt.dateEvent.split('-').reverse().join('/') : 'Data N/A';
+
+                const div = document.createElement("div");
+                div.className = "item-jogo";
+                div.innerHTML = `
+                    <div>
+                        <span class="confronto">${homeTeam} vs ${awayTeam}</span>
+                        <div class="data-jogo">${dataFormatada}</div>
+                    </div>
+                    <div class="placar">${homeScore} x ${awayScore}</div>
+                `;
+                listaContainer.appendChild(div);
+            });
+
+            statusText.textContent = `${jogosEncerrados.length} jogos finalizados exibidos`;
+            statusText.style.color = "#22c55e";
+
+        } catch (error) {
+            console.error("Erro ao carregar jogos:", error);
+            statusText.textContent = "Erro ao carregar dados";
+            statusText.style.color = "#ef4444";
+            listaContainer.innerHTML = '<p style="color: #ef4444; text-align: center; padding: 20px;">Ocorreu uma falha ao consultar os resultados do campeonato.</p>';
+        }
+    }
+
+    window.addEventListener("DOMContentLoaded", carregarResultadosBrasileirao);
+</script>
+
+</body>
+</html>
