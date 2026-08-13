@@ -4,11 +4,83 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Race Inteligente LIVE Cloud</title>
+    
+    <!-- Meta tags para suporte a App no iOS/iPhone -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Race Inteligente">
+
     <!-- Favicon SVG gerado via Data URI -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M50 5L15 20V50C15 72.5 50 95 50 95C50 95 85 72.5 85 50V20L50 5Z' fill='%230f172a' stroke='%233b82f6' stroke-width='6'/><path d='M35 60L45 45L55 52L65 35' stroke='%2322c55e' stroke-width='8' stroke-linecap='round' stroke-linejoin='round'/><circle cx='65' cy='35' r='5' fill='%2322c55e'/></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M50 5L15 20V50C15 72.5 50 95 50 95C50 95 85 72.5 85 50V20L50 5Z' fill='%230f172a' stroke='%233b82f6' stroke-width='6'/><path d='M35 60L45 45L55 52L65 35' stroke='%2322c55e' stroke-width='8' stroke-linecap='round' stroke-linejoin='round'/><circle cx='65' cy='35' r='5' fill='%2322c55e'/></svg>">
+    
     <link rel="stylesheet" href="css/style.css">
     <style>
-        /* Estilos do Radar de Próximos Jogos */
+        /* Banner de Instalação no iOS */
+        .pwa-banner {
+            display: none;
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border: 1px solid #3b82f6;
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .pwa-btn {
+            background-color: #3b82f6;
+            color: #fff;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        /* Modal Explicativo para iOS */
+        .modal-pwa-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(4px);
+            z-index: 9999;
+            justify-content: center;
+            align-items: flex-end;
+        }
+
+        .modal-pwa-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 16px 16px 0 0;
+            padding: 24px;
+            width: 100%;
+            max-width: 500px;
+            color: #f8fafc;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .instrucao-passo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 15px 0;
+            background: #0f172a;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            font-size: 0.9rem;
+        }
+
+        /* Estilos da Tabela de Radar */
         .tabela-jogos {
             width: 100%;
             border-collapse: collapse;
@@ -35,9 +107,8 @@
 </head>
 <body>
 
-<header class="topo">
+<header class="topo" style="padding: 20px 0;">
     <div class="logo-area" style="display: flex; align-items: center; gap: 12px;">
-        <!-- LOGO VETORIAL RACE INTELIGENTE -->
         <svg width="42" height="42" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M50 5L15 20V50C15 72.5 50 95 50 95C50 95 85 72.5 85 50V20L50 5Z" fill="#1E293B" stroke="#3B82F6" stroke-width="5"/>
             <path d="M35 60L45 45L55 52L65 35" stroke="#22C55E" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
@@ -52,6 +123,18 @@
 </header>
 
 <main class="container">
+
+    <!-- BANNER DE SUGESTÃO PARA IPHONE -->
+    <div id="bannerIosPwa" class="pwa-banner">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 1.5rem;">📱</span>
+            <div>
+                <strong style="font-size: 0.9rem; color: #f8fafc;">Instalar App no iPhone</strong>
+                <p style="font-size: 0.75rem; color: #94a3b8; margin-top:2px;">Acesse rápido direto da sua tela inicial</p>
+            </div>
+        </div>
+        <button class="pwa-btn" onclick="abrirModalIos()">Como Instalar</button>
+    </div>
 
     <!-- PAINEL LIVE -->
     <section class="card">
@@ -80,7 +163,7 @@
         </div>
     </section>
 
-    <!-- RADAR DE PRÓXIMOS JOGOS (SUPERIOR) -->
+    <!-- RADAR DE PRÓXIMOS JOGOS -->
     <section class="card" style="margin-top: 20px;">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
             <h2>Radar de Próximos Jogos (Todos os Campeonatos)</h2>
@@ -171,13 +254,68 @@
 
 </main>
 
+<!-- MODAL COM PASSO A PASSO PARA IPHONE -->
+<div id="modalIosPwa" class="modal-pwa-overlay" onclick="fecharModalIos(event)">
+    <div class="modal-pwa-card" onclick="event.stopPropagation()">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
+            <h3 style="color:#38bdf8; font-size: 1.1rem;">Adicionar à Tela de Início</h3>
+            <button onclick="fecharModalIos()" style="background:none; border:none; color:#94a3b8; font-size: 1.5rem; cursor:pointer;">&times;</button>
+        </div>
+        
+        <p style="font-size: 0.85rem; color: #94a3b8;">
+            Para usar o <strong>Race Inteligente</strong> como aplicativo no seu iPhone, siga estes 2 passos no Safari:
+        </p>
+
+        <div class="instrucao-passo">
+            <span style="font-size: 1.4rem;">1️⃣</span>
+            <span>Toque no botão de <strong>Compartilhar</strong> na barra do Safari <span style="color:#3b82f6;">(ícone de quadrado com seta para cima ⎋)</span>.</span>
+        </div>
+
+        <div class="instrucao-passo">
+            <span style="font-size: 1.4rem;">2️⃣</span>
+            <span>Role para baixo e selecione <strong>"Adicionar à Tela de Início"</strong> ➕.</span>
+        </div>
+
+        <button class="pwa-btn" style="width: 100%; margin-top: 10px; padding: 12px;" onclick="fecharModalIos()">Entendido</button>
+    </div>
+</div>
+
 <footer class="rodape" style="text-align: center; padding: 20px; color: #64748b; font-size: 0.85rem;">
     Race Inteligente LIVE Cloud v0.1 Alpha
 </footer>
 
 <script src="js/app.js"></script>
 
-<!-- Script para carregar a Tabela do Radar Multiliga -->
+<!-- Script de Detecção do iOS/iPhone -->
+<script>
+    function ehIos() {
+        const userAgent = window.navigator.userAgent.toLowerCase();
+        return /iphone|ipad|ipod/.test(userAgent);
+    }
+
+    function jaEAppNativo() {
+        return window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+    }
+
+    function verificarPromptIos() {
+        // Exibe o banner apenas se for um dispositivo iOS e NÃO estiver rodando como app já instalado
+        if (ehIos() && !jaEAppNativo()) {
+            document.getElementById('bannerIosPwa').style.display = 'flex';
+        }
+    }
+
+    function abrirModalIos() {
+        document.getElementById('modalIosPwa').style.display = 'flex';
+    }
+
+    function fecharModalIos(e) {
+        document.getElementById('modalIosPwa').style.display = 'none';
+    }
+
+    window.addEventListener('DOMContentLoaded', verificarPromptIos);
+</script>
+
+<!-- Script do Radar Multiliga -->
 <script>
     const ligasRadar = [
         { id: "4351", nome: "Brasileirão" },
@@ -236,12 +374,10 @@
     }
 
     document.getElementById('btn-atualizar-radar-index').addEventListener('click', carregarRadarIndex);
-    
-    // Executa ao carregar
     carregarRadarIndex();
 </script>
 
-<!-- Módulo para carregar a última análise do Firestore no Painel LIVE -->
+<!-- Script para carregar Firestore no Painel LIVE -->
 <script type="module">
     import { db } from './js/firebase-config.js';
     import { 
@@ -279,25 +415,6 @@
             }
         } catch (error) {
             console.error("Erro ao carregar dados do Painel LIVE:", error);
-            fallbackSemOrdenacao();
-        }
-    }
-
-    async function fallbackSemOrdenacao() {
-        try {
-            const querySnapshot = await getDocs(collection(db, "ri_historico"));
-            if (!querySnapshot.empty) {
-                const docs = [];
-                querySnapshot.forEach(doc => docs.push(doc.data()));
-                const ultima = docs[docs.length - 1];
-
-                document.getElementById("statusPainel").textContent = ultima.classificacao || "Analisado";
-                document.getElementById("minutoPainel").textContent = (ultima.minuto || "--") + "'";
-                document.getElementById("iqpPainel").textContent = ultima.iqp || "--";
-                document.getElementById("entradaPainel").textContent = ultima.jogo || "--";
-            }
-        } catch (e) {
-            console.error("Erro no fallback:", e);
         }
     }
 

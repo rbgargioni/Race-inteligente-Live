@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Race Inteligente LIVE Cloud</title>
+    <!-- Favicon SVG gerado via Data URI -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M50 5L15 20V50C15 72.5 50 95 50 95C50 95 85 72.5 85 50V20L50 5Z' fill='%230f172a' stroke='%233b82f6' stroke-width='6'/><path d='M35 60L45 45L55 52L65 35' stroke='%2322c55e' stroke-width='8' stroke-linecap='round' stroke-linejoin='round'/><circle cx='65' cy='35' r='5' fill='%2322c55e'/></svg>">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Estilos do Radar de Próximos Jogos */
+        .tabela-jogos {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 0.85rem;
+        }
+        .tabela-jogos th, .tabela-jogos td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border, #334155);
+        }
+        .tabela-jogos th {
+            background: #0f172a;
+            color: #94a3b8;
+        }
+        .badge-liga {
+            background: #334155;
+            color: #38bdf8;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+
+<header class="topo">
+    <div class="logo-area" style="display: flex; align-items: center; gap: 12px;">
+        <!-- LOGO VETORIAL RACE INTELIGENTE -->
+        <svg width="42" height="42" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M50 5L15 20V50C15 72.5 50 95 50 95C50 95 85 72.5 85 50V20L50 5Z" fill="#1E293B" stroke="#3B82F6" stroke-width="5"/>
+            <path d="M35 60L45 45L55 52L65 35" stroke="#22C55E" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="65" cy="35" r="4" fill="#22C55E"/>
+            <circle cx="35" cy="60" r="3" fill="#38BDF8"/>
+        </svg>
+        <div>
+            <h1 style="margin:0; font-size: 1.4rem;">Race <span style="color: #3b82f6;">Inteligente</span> LIVE Cloud</h1>
+            <p style="margin:0; font-size: 0.85rem; color: #94a3b8;">Análise profissional de partidas de futebol ao vivo</p>
+        </div>
+    </div>
+</header>
+
+<main class="container">
+
+    <!-- PAINEL LIVE -->
+    <section class="card">
+        <h2>PAINEL LIVE</h2>
+
+        <div class="painel-grid">
+            <div class="painel-item">
+                <span>Status</span>
+                <strong id="statusPainel">Aguardando</strong>
+            </div>
+
+            <div class="painel-item">
+                <span>Minuto</span>
+                <strong id="minutoPainel">--</strong>
+            </div>
+
+            <div class="painel-item">
+                <span>IQP</span>
+                <strong id="iqpPainel">--</strong>
+            </div>
+
+            <div class="painel-item">
+                <span>Entrada</span>
+                <strong id="entradaPainel">--</strong>
+            </div>
+        </div>
+    </section>
+
+    <!-- RADAR DE PRÓXIMOS JOGOS (SUPERIOR) -->
+    <section class="card" style="margin-top: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <h2>Radar de Próximos Jogos (Todos os Campeonatos)</h2>
+            <button type="button" class="btn btn-primary" id="btn-atualizar-radar-index" style="font-size: 0.8rem; padding: 6px 12px;">Atualizar Radar</button>
+        </div>
+        <p style="font-size: 0.85rem; color: #94a3b8; margin-top: 5px;">
+            Lista consolidada das próximas partidas agendadas em diversos campeonatos.
+        </p>
+
+        <div style="overflow-x: auto;">
+            <table class="tabela-jogos">
+                <thead>
+                    <tr>
+                        <th>Liga</th>
+                        <th>Confronto</th>
+                        <th>Data / Hora</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody id="corpo-tabela-radar-index">
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: #94a3b8;">Carregando próximas partidas de todos os campeonatos...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- NAVEGAÇÃO DO SISTEMA -->
+    <section class="menu-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-top: 20px;">
+        
+        <a href="robo.html" class="card-link" style="text-decoration:none; color:inherit;">
+            <div class="card" style="border-color: #3b82f6;">
+                <h3 style="color: #38bdf8;">🤖 Robô de Análise Esportiva</h3>
+                <p style="color: #94a3b8; font-size: 0.9rem;">Probabilidades via API, simulador de apostas e radar de jogos.</p>
+            </div>
+        </a>
+
+        <a href="entradas.html" class="card-link" style="text-decoration:none; color:inherit;">
+            <div class="card">
+                <h3>Entradas para Analisar</h3>
+                <p style="color: #94a3b8; font-size: 0.9rem;">Jogos cadastrados para monitorar aos 65 minutos.</p>
+            </div>
+        </a>
+
+        <a href="analise.html" class="card-link" style="text-decoration:none; color:inherit;">
+            <div class="card">
+                <h3>Nova Análise (LIVE)</h3>
+                <p style="color: #94a3b8; font-size: 0.9rem;">Realize uma análise completa durante a partida.</p>
+            </div>
+        </a>
+
+        <a href="historico.html" class="card-link" style="text-decoration:none; color:inherit;">
+            <div class="card">
+                <h3>Histórico</h3>
+                <p style="color: #94a3b8; font-size: 0.9rem;">Consulte todas as análises realizadas.</p>
+            </div>
+        </a>
+
+        <a href="banco.html" class="card-link" style="text-decoration:none; color:inherit;">
+            <div class="card">
+                <h3>Banco de Dados</h3>
+                <p style="color: #94a3b8; font-size: 0.9rem;">Gerencie ligas e times cadastrados.</p>
+            </div>
+        </a>
+
+        <a href="dashboard.html" class="card-link" style="text-decoration:none; color:inherit;">
+            <div class="card">
+                <h3>Dashboard</h3>
+                <p style="color: #94a3b8; font-size: 0.9rem;">Estatísticas, IQP, ROI e desempenho do método.</p>
+            </div>
+        </a>
+
+        <a href="calculadora.html" class="card-link" style="text-decoration:none; color:inherit;">
+            <div class="card">
+                <h3>Calculadora IQP</h3>
+                <p style="color: #94a3b8; font-size: 0.9rem;">Calcule o Índice de Qualidade de Previsão.</p>
+            </div>
+        </a>
+
+        <a href="dashboardvivo.html" class="card-link" style="text-decoration:none; color:inherit;">
+            <div class="card">
+                <h3>Dashboard ao Vivo</h3>
+                <p style="color: #94a3b8; font-size: 0.9rem;">Estatísticas em tempo real durante as partidas.</p>
+            </div>
+        </a>
+    </section>
+
+</main>
+
+<footer class="rodape" style="text-align: center; padding: 20px; color: #64748b; font-size: 0.85rem;">
+    Race Inteligente LIVE Cloud v0.1 Alpha
+</footer>
+
+<script src="js/app.js"></script>
+
+<!-- Script para carregar a Tabela do Radar Multiliga -->
+<script>
+    const ligasRadar = [
+        { id: "4351", nome: "Brasileirão" },
+        { id: "4328", nome: "Premier League" },
+        { id: "4335", nome: "La Liga" },
+        { id: "4331", nome: "Bundesliga" },
+        { id: "4332", nome: "Serie A (ITA)" }
+    ];
+
+    async function carregarRadarIndex() {
+        const tabelaCorpo = document.getElementById('corpo-tabela-radar-index');
+        tabelaCorpo.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #94a3b8;">Buscando dados das ligas na API...</td></tr>';
+
+        let jogosUnificados = [];
+
+        for (const liga of ligasRadar) {
+            try {
+                const url = `https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=${liga.id}`;
+                const res = await fetch(url);
+                const dados = await res.json();
+
+                if (dados && dados.events) {
+                    dados.events.slice(0, 3).forEach(evt => {
+                        jogosUnificados.push({
+                            ligaNome: liga.nome,
+                            home: evt.strHomeTeam,
+                            away: evt.strAwayTeam,
+                            data: evt.dateEvent ? evt.dateEvent.split('-').reverse().join('/') : 'Em breve',
+                            hora: evt.strTime ? evt.strTime.substring(0, 5) : ''
+                        });
+                    });
+                }
+            } catch (e) {
+                console.error("Erro ao buscar liga " + liga.nome, e);
+            }
+        }
+
+        const proximos10 = jogosUnificados.slice(0, 10);
+
+        if (proximos10.length === 0) {
+            tabelaCorpo.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #94a3b8;">Nenhum jogo retornado no momento.</td></tr>';
+            return;
+        }
+
+        tabelaCorpo.innerHTML = '';
+        proximos10.forEach((item) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><span class="badge-liga">${item.ligaNome}</span></td>
+                <td><strong>${item.home}</strong> x <strong>${item.away}</strong></td>
+                <td>${item.data} ${item.hora}</td>
+                <td><a href="robo.html" class="btn btn-primary" style="font-size:0.75rem; padding:4px 8px; text-decoration:none;">Analisar</a></td>
+            `;
+            tabelaCorpo.appendChild(tr);
+        });
+    }
+
+    document.getElementById('btn-atualizar-radar-index').addEventListener('click', carregarRadarIndex);
+    
+    // Executa ao carregar
+    carregarRadarIndex();
+</script>
+
+<!-- Módulo para carregar a última análise do Firestore no Painel LIVE -->
+<script type="module">
+    import { db } from './js/firebase-config.js';
+    import { 
+        collection, 
+        query, 
+        orderBy, 
+        limit, 
+        getDocs 
+    } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+
+    async function atualizarPainelLiveNuvem() {
+        try {
+            const q = query(collection(db, "ri_historico"), orderBy("criadoEm", "desc"), limit(1));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                const ultimaAnalise = querySnapshot.docs[0].data();
+
+                document.getElementById("statusPainel").textContent = ultimaAnalise.classificacao || "Analisado";
+                document.getElementById("minutoPainel").textContent = (ultimaAnalise.minuto || "--") + "'";
+                document.getElementById("iqpPainel").textContent = ultimaAnalise.iqp || "--";
+                document.getElementById("entradaPainel").textContent = ultimaAnalise.jogo || "--";
+
+                const statusEl = document.getElementById("statusPainel");
+                if (ultimaAnalise.classificacao === "PREMIUM") statusEl.style.color = "#22c55e";
+                else if (ultimaAnalise.classificacao === "FORTE") statusEl.style.color = "#3b82f6";
+                else if (ultimaAnalise.classificacao === "MODERADA") statusEl.style.color = "#eab308";
+                else statusEl.style.color = "#ef4444";
+
+            } else {
+                document.getElementById("statusPainel").textContent = "Aguardando";
+                document.getElementById("minutoPainel").textContent = "--";
+                document.getElementById("iqpPainel").textContent = "--";
+                document.getElementById("entradaPainel").textContent = "Nenhum jogo";
+            }
+        } catch (error) {
+            console.error("Erro ao carregar dados do Painel LIVE:", error);
+            fallbackSemOrdenacao();
+        }
+    }
+
+    async function fallbackSemOrdenacao() {
+        try {
+            const querySnapshot = await getDocs(collection(db, "ri_historico"));
+            if (!querySnapshot.empty) {
+                const docs = [];
+                querySnapshot.forEach(doc => docs.push(doc.data()));
+                const ultima = docs[docs.length - 1];
+
+                document.getElementById("statusPainel").textContent = ultima.classificacao || "Analisado";
+                document.getElementById("minutoPainel").textContent = (ultima.minuto || "--") + "'";
+                document.getElementById("iqpPainel").textContent = ultima.iqp || "--";
+                document.getElementById("entradaPainel").textContent = ultima.jogo || "--";
+            }
+        } catch (e) {
+            console.error("Erro no fallback:", e);
+        }
+    }
+
+    atualizarPainelLiveNuvem();
+</script>
+
+</body>
+</html>
