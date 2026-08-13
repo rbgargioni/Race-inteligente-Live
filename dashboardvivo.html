@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Race Inteligente LIVE - Dashboard ao Vivo</title>
+    <title>Race Inteligente LIVE Cloud</title>
+    <!-- Favicon SVG gerado via Data URI -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M50 5L15 20V50C15 72.5 50 95 50 95C50 95 85 72.5 85 50V20L50 5Z' fill='%230f172a' stroke='%233b82f6' stroke-width='6'/><path d='M35 60L45 45L55 52L65 35' stroke='%2322c55e' stroke-width='8' stroke-linecap='round' stroke-linejoin='round'/><circle cx='65' cy='35' r='5' fill='%2322c55e'/></svg>">
     <link rel="stylesheet" href="css/style.css">
     <style>
         :root {
@@ -101,8 +103,20 @@
 <body>
 
 <div class="container">
-    <header>
-        <h1>📊 Dashboard & Previsões ao Vivo</h1>
+    <header class="topo">
+        <div class="logo-area" style="display: flex; align-items: center; gap: 12px;">
+            <!-- LOGO VETORIAL RACE INTELIGENTE -->
+            <svg width="42" height="42" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M50 5L15 20V50C15 72.5 50 95 50 95C50 95 85 72.5 85 50V20L50 5Z" fill="#1E293B" stroke="#3B82F6" stroke-width="5"/>
+                <path d="M35 60L45 45L55 52L65 35" stroke="#22C55E" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="65" cy="35" r="4" fill="#22C55E"/>
+                <circle cx="35" cy="60" r="3" fill="#38BDF8"/>
+            </svg>
+            <div>
+                <h1 style="margin:0; font-size: 1.4rem;">Race <span style="color: #3b82f6;">Inteligente</span> LIVE Cloud</h1>
+                <p style="margin:0; font-size: 0.85rem; color: #94a3b8;">Análise profissional de partidas de futebol ao vivo</p>
+            </div>
+        </div>
         <a href="index.html" class="nav-btn">⬅️ Voltar ao Painel</a>
     </header>
 
@@ -140,6 +154,7 @@
                     </thead>
                     <tbody id="tabelaHistorico">
                         <!-- Linhas da tabela preenchidas pelo JS via Firestore -->
+                        <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Buscando dados no banco...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -195,27 +210,37 @@
         const tabela = document.getElementById("tabelaHistorico");
 
         try {
-            // 1. Busca dados do Firestore
-            const querySnapshot = await getDocs(collection(db, "ri_historico"));
+            // 1. Busca dados do Firestore de forma segura
             const historico = [];
-            tabela.innerHTML = "";
+            
+            try {
+                const querySnapshot = await getDocs(collection(db, "ri_historico"));
+                tabela.innerHTML = "";
 
-            querySnapshot.forEach(doc => {
-                const item = doc.data();
-                historico.push(item);
+                if (querySnapshot.empty) {
+                    tabela.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Nenhuma análise registrada no histórico.</td></tr>`;
+                } else {
+                    querySnapshot.forEach(doc => {
+                        const item = doc.data();
+                        historico.push(item);
 
-                // Preenche a tabela do histórico
-                const tr = document.createElement("tr");
-                tr.innerHTML = `
-                    <td><strong>${item.jogo || '--'}</strong></td>
-                    <td>${item.posse || 0}%</td>
-                    <td>${item.ataquesPerigosos || 0}</td>
-                    <td>${item.finalizacoes || 0} / ${item.noAlvo || 0}</td>
-                    <td><span class="badge-iqp" style="background:#3b82f620; color:#3b82f6; border:1px solid #3b82f6;">${item.iqp || 0} pts</span></td>
-                    <td style="color:#22c55e; font-weight:bold;">${item.apostaSugerida || item.classificacao || '--'}</td>
-                `;
-                tabela.appendChild(tr);
-            });
+                        // Preenche a tabela do histórico
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `
+                            <td><strong>${item.jogo || '--'}</strong></td>
+                            <td>${item.posse || 0}%</td>
+                            <td>${item.ataquesPerigosos || 0}</td>
+                            <td>${item.finalizacoes || 0} / ${item.noAlvo || 0}</td>
+                            <td><span class="badge-iqp" style="background:#3b82f620; color:#3b82f6; border:1px solid #3b82f6;">${item.iqp || 0} pts</span></td>
+                            <td style="color:#22c55e; font-weight:bold;">${item.apostaSugerida || item.classificacao || '--'}</td>
+                        `;
+                        tabela.appendChild(tr);
+                    });
+                }
+            } catch (fsErr) {
+                console.warn("Erro ao ler do Firestore (modo offline/sem registros):", fsErr);
+                tabela.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #ef4444;">Erro ao carregar o histórico do banco.</td></tr>`;
+            }
 
             // 2. Busca os próximos jogos direto da API
             statusText.textContent = "Buscando jogos agendados...";
