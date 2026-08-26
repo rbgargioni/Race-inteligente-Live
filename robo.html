@@ -362,6 +362,24 @@
             document.getElementById('disp-winrate').innerText = `${winrate}%`;
         }
 
+        // Busca a rodada completa do Brasileirão (a API só devolve 1 jogo em "próximos jogos",
+        // então aqui pegamos o número da rodada e buscamos todos os jogos dela).
+        async function buscarRodadaBrasileirao() {
+            try {
+                const resNext = await fetch(`https://www.thesportsdb.com/api/v1/json/123/eventsnextleague.php?id=4351`);
+                const dadosNext = await resNext.json();
+                const proximo = dadosNext && dadosNext.events && dadosNext.events[0];
+                if (!proximo) return [];
+
+                const resRodada = await fetch(`https://www.thesportsdb.com/api/v1/json/123/eventsround.php?id=4351&r=${proximo.intRound}&s=${proximo.strSeason}`);
+                const dadosRodada = await resRodada.json();
+                return (dadosRodada && dadosRodada.events) ? dadosRodada.events : [proximo];
+            } catch (e) {
+                console.error("Erro ao buscar rodada do Brasileirão", e);
+                return [];
+            }
+        }
+
         // Buscar a lista unificada dos próximos 10 jogos de todas as ligas
         async function carregarRadar10Jogos() {
             const tabelaCorpo = document.getElementById('corpo-tabela-radar');
@@ -371,7 +389,22 @@
 
             for (const liga of ligasDisponiveis) {
                 try {
-                    const url = `https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=${liga.id}`;
+                    // Brasileirão usa busca por rodada completa (mais jogos retornados)
+                    if (liga.id === "4351") {
+                        const eventosRodada = await buscarRodadaBrasileirao();
+                        eventosRodada.slice(0, 5).forEach(evt => {
+                            jogosUnificados.push({
+                                ligaNome: liga.nome,
+                                home: evt.strHomeTeam,
+                                away: evt.strAwayTeam,
+                                data: evt.dateEvent ? evt.dateEvent.split('-').reverse().join('/') : 'Em breve',
+                                hora: evt.strTime ? evt.strTime.substring(0, 5) : ''
+                            });
+                        });
+                        continue;
+                    }
+
+                    const url = `https://www.thesportsdb.com/api/v1/json/123/eventsnextleague.php?id=${liga.id}`;
                     const res = await fetch(url);
                     const dados = await res.json();
 
@@ -427,19 +460,27 @@
             btnAnalisar.disabled = true;
 
             try {
-                let url = `https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=${idLiga}`;
-                let resposta = await fetch(url);
-                let dados = await resposta.json();
+                let listaEventos = [];
 
-                let listaEventos = dados && dados.events ? dados.events : [];
+                // Brasileirão usa busca por rodada completa (a API só devolve 1 jogo
+                // no endpoint padrão de "próximos jogos")
+                if (idLiga === "4351") {
+                    listaEventos = await buscarRodadaBrasileirao();
+                } else {
+                    let url = `https://www.thesportsdb.com/api/v1/json/123/eventsnextleague.php?id=${idLiga}`;
+                    let resposta = await fetch(url);
+                    let dados = await resposta.json();
 
-                if (listaEventos.length < 10) {
-                    const urlMaisJogos = `https://www.thesportsdb.com/api/v1/json/3/eventspastleague.php?id=${idLiga}`;
-                    const respMais = await fetch(urlMaisJogos);
-                    const dadosMais = await respMais.json();
-                    
-                    if (dadosMais && dadosMais.events) {
-                        listaEventos = [...listaEventos, ...dadosMais.events];
+                    listaEventos = dados && dados.events ? dados.events : [];
+
+                    if (listaEventos.length < 10) {
+                        const urlMaisJogos = `https://www.thesportsdb.com/api/v1/json/123/eventspastleague.php?id=${idLiga}`;
+                        const respMais = await fetch(urlMaisJogos);
+                        const dadosMais = await respMais.json();
+
+                        if (dadosMais && dadosMais.events) {
+                            listaEventos = [...listaEventos, ...dadosMais.events];
+                        }
                     }
                 }
 
