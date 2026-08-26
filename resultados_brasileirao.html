@@ -6,62 +6,6 @@
     <title>Resultados Brasileirão Série A</title>
     <link rel="stylesheet" href="css/style.css">
     <style>
-        :root {
-            --bg-primary: #0f172a;
-            --bg-card: #1e293b;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --accent-blue: #3b82f6;
-            --accent-green: #22c55e;
-            --border-color: #334155;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-primary);
-            color: var(--text-main);
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 900px;
-        }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .nav-btn {
-            background-color: var(--accent-blue);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 0.9rem;
-        }
-
-        .card {
-            background-color: var(--bg-card);
-            border-radius: 10px;
-            padding: 20px;
-            border: 1px solid var(--border-color);
-        }
-
         .lista-resultados {
             display: flex;
             flex-direction: column;
@@ -71,22 +15,29 @@
 
         .item-jogo {
             background-color: #0f172a;
-            border: 1px solid var(--border-color);
-            padding: 12px 16px;
+            border: 1px solid var(--border, #334155);
             border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .item-jogo-cabecalho {
+            padding: 12px 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 0.95rem;
+            flex-wrap: wrap;
+            gap: 8px;
+            cursor: pointer;
         }
 
         .confronto {
             font-weight: 600;
+            font-size: 0.95rem;
         }
 
         .placar {
             background-color: #334155;
-            color: var(--accent-green);
+            color: var(--green, #22c55e);
             padding: 4px 12px;
             border-radius: 6px;
             font-weight: bold;
@@ -95,105 +46,339 @@
 
         .data-jogo {
             font-size: 0.8rem;
-            color: var(--text-muted);
+            color: var(--text-secondary, #94a3b8);
+        }
+
+        .item-jogo-detalhes {
+            display: none;
+            padding: 14px 16px;
+            border-top: 1px solid var(--border, #334155);
+            background: #090d16;
+        }
+
+        .item-jogo.aberto .item-jogo-detalhes {
+            display: block;
+        }
+
+        .bloco-detalhe h4 {
+            font-size: 0.8rem;
+            color: #38bdf8;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            margin-bottom: 8px;
+        }
+
+        .bloco-detalhe {
+            margin-bottom: 14px;
+        }
+        .bloco-detalhe:last-child {
+            margin-bottom: 0;
+        }
+
+        .linha-stat {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            padding: 5px 0;
+            border-bottom: 1px solid #1e293b;
+        }
+        .linha-stat:last-child { border-bottom: none; }
+        .linha-stat .valor-home { text-align: left; color: #f8fafc; font-weight: 600; }
+        .linha-stat .valor-away { text-align: right; color: #f8fafc; font-weight: 600; }
+        .linha-stat .nome-stat { text-align: center; color: #94a3b8; font-size: 0.75rem; }
+
+        .gol-item {
+            display: flex;
+            gap: 8px;
+            align-items: baseline;
+            font-size: 0.85rem;
+            padding: 4px 0;
+            color: #cbd5e1;
+        }
+        .gol-item .minuto {
+            color: #22c55e;
+            font-weight: bold;
+            min-width: 34px;
+        }
+
+        .aviso-sem-detalhe {
+            font-size: 0.85rem;
+            color: #64748b;
+            text-align: center;
+            padding: 6px 0;
+        }
+
+        .filtros-resultados {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+
+        .filtros-resultados input {
+            flex: 1;
+            min-width: 200px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: #0f172a;
+            color: white;
+            border: 1px solid var(--border, #334155);
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <header>
+<header class="topo" style="padding: 20px 0;">
+    <div class="logo-area" style="display: flex; align-items: center; gap: 12px;">
+        <svg width="42" height="42" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M50 5L15 20V50C15 72.5 50 95 50 95C50 95 85 72.5 85 50V20L50 5Z" fill="#1E293B" stroke="#3B82F6" stroke-width="5"/>
+            <path d="M35 60L45 45L55 52L65 35" stroke="#22C55E" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="65" cy="35" r="4" fill="#22C55E"/>
+            <circle cx="35" cy="60" r="3" fill="#38BDF8"/>
+        </svg>
         <div>
-            <h1>🇧🇷 Resultados do Brasileirão Série A</h1>
-            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">
-                Jogos finalizados da temporada atual
-            </p>
+            <h1 style="margin:0; font-size: 1.4rem;">🇧🇷 Resultados do Brasileirão</h1>
+            <p style="margin:0; font-size: 0.85rem; color: #94a3b8;">Jogos já encerrados da temporada atual</p>
         </div>
-        <a href="index.html" class="nav-btn">⬅️ Voltar ao Painel</a>
-    </header>
+    </div>
+</header>
 
-    <main>
-        <section class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                <h2>Partidas Encerradas</h2>
-                <span id="statusCarregamento" style="font-size: 0.85rem; color: var(--accent-blue);">Buscando resultados da temporada...</span>
-            </div>
+<main class="container">
+    <section class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <h2>Partidas Encerradas</h2>
+            <span id="statusCarregamento" style="font-size: 0.85rem; color: #3b82f6;">Buscando resultados da temporada...</span>
+        </div>
 
-            <div id="listaResultados" class="lista-resultados">
-                <p style="color: var(--text-muted); text-align: center; padding: 20px;">Carregando histórico de partidas...</p>
-            </div>
-        </section>
-    </main>
-</div>
+        <p style="font-size: 0.8rem; color: #64748b; margin-top: 6px;">
+            Clique em um jogo para ver estatísticas e gols, quando disponíveis na API.
+        </p>
+
+        <div class="filtros-resultados">
+            <input type="text" id="filtroTime" placeholder="Filtrar por time...">
+        </div>
+
+        <div id="listaResultados" class="lista-resultados">
+            <p style="color: var(--text-secondary, #94a3b8); text-align: center; padding: 20px;">Carregando histórico de partidas...</p>
+        </div>
+    </section>
+
+    <div style="margin-top: 20px; margin-bottom: 30px; text-align: center;">
+        <a href="index.html" class="btn btn-secondary">Voltar ao Início</a>
+    </div>
+</main>
 
 <script>
+    const ID_LIGA_BRASILEIRAO = "4351";
+    let todosJogosEncerrados = [];
+    const cacheDetalhes = {};
+
+    async function descobrirRodadaAtual() {
+        const res = await fetch(`https://www.thesportsdb.com/api/v1/json/123/eventsnextleague.php?id=${ID_LIGA_BRASILEIRAO}`);
+        const dados = await res.json();
+        const proximo = dados && dados.events && dados.events[0];
+        if (!proximo) return null;
+        return { rodada: parseInt(proximo.intRound, 10), temporada: proximo.strSeason };
+    }
+
+    async function buscarRodada(rodada, temporada) {
+        try {
+            const res = await fetch(`https://www.thesportsdb.com/api/v1/json/123/eventsround.php?id=${ID_LIGA_BRASILEIRAO}&r=${rodada}&s=${temporada}`);
+            const dados = await res.json();
+            return dados && dados.events ? dados.events : [];
+        } catch (e) {
+            console.error(`Erro ao buscar rodada ${rodada}`, e);
+            return [];
+        }
+    }
+
     async function carregarResultadosBrasileirao() {
         const statusText = document.getElementById("statusCarregamento");
         const listaContainer = document.getElementById("listaResultados");
 
         try {
-            // Busca todos os eventos da temporada do Brasileirão (ID: 4351)
-            const anoAtual = new Date().getFullYear();
-            let url = `https://www.thesportsdb.com/api/v1/json/3/eventsseason.php?id=4351&s=${anoAtual}`;
-            let response = await fetch(url);
-            let data = await response.json();
+            const info = await descobrirRodadaAtual();
 
-            // Fallback para buscar a última temporada caso a atual ainda não possua jogos retornados
-            if (!data || !data.events || data.events.length === 0) {
-                url = `https://www.thesportsdb.com/api/v1/json/3/eventspastleague.php?id=4351`;
-                response = await fetch(url);
-                data = await response.json();
-            }
-
-            if (!data || !data.events || data.events.length === 0) {
-                listaContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 20px;">Nenhum jogo encontrado para esta temporada.</p>';
+            if (!info) {
+                listaContainer.innerHTML = '<p style="color: var(--text-secondary, #94a3b8); text-align: center; padding: 20px;">Não foi possível identificar a rodada atual do campeonato.</p>';
                 statusText.textContent = "Sem dados";
                 return;
             }
 
-            // Filtra somente os jogos que já foram encerrados (que contêm placar)
-            const jogosEncerrados = data.events.filter(evt => evt.intHomeScore !== null && evt.intHomeScore !== "");
+            const rodadasParaBuscar = [];
+            for (let r = 1; r <= info.rodada; r++) rodadasParaBuscar.push(r);
 
-            if (jogosEncerrados.length === 0) {
-                listaContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 20px;">Nenhum jogo finalizado com placar registrado até o momento.</p>';
+            const resultadosPorRodada = await Promise.all(
+                rodadasParaBuscar.map(r => buscarRodada(r, info.temporada))
+            );
+
+            const todosJogos = resultadosPorRodada.flat();
+
+            todosJogosEncerrados = todosJogos.filter(evt =>
+                evt.intHomeScore !== null && evt.intHomeScore !== "" &&
+                evt.intAwayScore !== null && evt.intAwayScore !== ""
+            );
+
+            todosJogosEncerrados.sort((a, b) => new Date(b.dateEvent) - new Date(a.dateEvent));
+
+            if (todosJogosEncerrados.length === 0) {
+                listaContainer.innerHTML = '<p style="color: var(--text-secondary, #94a3b8); text-align: center; padding: 20px;">Nenhum jogo finalizado encontrado até o momento.</p>';
                 statusText.textContent = "0 jogos finalizados";
                 return;
             }
 
-            // Ordena os jogos do mais recente para o mais antigo
-            jogosEncerrados.sort((a, b) => new Date(b.dateEvent) - new Date(a.dateEvent));
+            renderizarLista(todosJogosEncerrados);
 
-            listaContainer.innerHTML = "";
-
-            jogosEncerrados.forEach(evt => {
-                const homeTeam = evt.strHomeTeam;
-                const awayTeam = evt.strAwayTeam;
-                const homeScore = evt.intHomeScore;
-                const awayScore = evt.intAwayScore;
-                const dataFormatada = evt.dateEvent ? evt.dateEvent.split('-').reverse().join('/') : 'Data N/A';
-
-                const div = document.createElement("div");
-                div.className = "item-jogo";
-                div.innerHTML = `
-                    <div>
-                        <span class="confronto">${homeTeam} vs ${awayTeam}</span>
-                        <div class="data-jogo">${dataFormatada}</div>
-                    </div>
-                    <div class="placar">${homeScore} x ${awayScore}</div>
-                `;
-                listaContainer.appendChild(div);
-            });
-
-            statusText.textContent = `${jogosEncerrados.length} jogos finalizados exibidos`;
+            statusText.textContent = `${todosJogosEncerrados.length} jogos finalizados exibidos`;
             statusText.style.color = "#22c55e";
 
         } catch (error) {
             console.error("Erro ao carregar jogos:", error);
             statusText.textContent = "Erro ao carregar dados";
             statusText.style.color = "#ef4444";
-            listaContainer.innerHTML = '<p style="color: #ef4444; text-align: center; padding: 20px;">Ocorreu uma falha ao consultar os resultados do campeonato.</p>';
+            listaContainer.innerHTML = `
+                <p style="color: #ef4444; text-align: center; padding: 20px 20px 5px;">Ocorreu uma falha ao consultar os resultados do campeonato.</p>
+                <p style="color: #64748b; font-size: 0.8rem; text-align: center; padding: 0 20px 20px;">
+                    Se você abriu este arquivo direto do computador (file://), a API do TheSportsDB pode bloquear a chamada de forma inconsistente.
+                    Tente recarregar a página, ou publique o site (ex: GitHub Pages) para um funcionamento mais estável.
+                </p>
+            `;
         }
     }
+
+    function renderizarLista(jogos) {
+        const listaContainer = document.getElementById("listaResultados");
+        listaContainer.innerHTML = "";
+
+        if (jogos.length === 0) {
+            listaContainer.innerHTML = '<p style="color: var(--text-secondary, #94a3b8); text-align: center; padding: 20px;">Nenhum jogo encontrado para esse filtro.</p>';
+            return;
+        }
+
+        jogos.forEach(evt => {
+            const dataFormatada = evt.dateEvent ? evt.dateEvent.split('-').reverse().join('/') : 'Data N/A';
+
+            const item = document.createElement("div");
+            item.className = "item-jogo";
+            item.innerHTML = `
+                <div class="item-jogo-cabecalho">
+                    <div>
+                        <span class="confronto">${evt.strHomeTeam} vs ${evt.strAwayTeam}</span>
+                        <div class="data-jogo">${dataFormatada}${evt.intRound ? ' · Rodada ' + evt.intRound : ''}</div>
+                    </div>
+                    <div class="placar">${evt.intHomeScore} x ${evt.intAwayScore}</div>
+                </div>
+                <div class="item-jogo-detalhes" id="detalhes-${evt.idEvent}">
+                    <p class="aviso-sem-detalhe">Carregando detalhes...</p>
+                </div>
+            `;
+
+            const cabecalho = item.querySelector(".item-jogo-cabecalho");
+            cabecalho.addEventListener("click", () => alternarDetalhes(item, evt.idEvent));
+
+            listaContainer.appendChild(item);
+        });
+    }
+
+    async function alternarDetalhes(item, idEvent) {
+        const jaAberto = item.classList.contains("aberto");
+
+        if (jaAberto) {
+            item.classList.remove("aberto");
+            return;
+        }
+
+        item.classList.add("aberto");
+
+        if (!cacheDetalhes[idEvent]) {
+            cacheDetalhes[idEvent] = await buscarDetalhesJogo(idEvent);
+        }
+
+        renderizarDetalhes(idEvent, cacheDetalhes[idEvent]);
+    }
+
+    async function buscarDetalhesJogo(idEvent) {
+        try {
+            const [respStats, respTimeline] = await Promise.all([
+                fetch(`https://www.thesportsdb.com/api/v1/json/123/lookupeventstats.php?id=${idEvent}`),
+                fetch(`https://www.thesportsdb.com/api/v1/json/123/lookuptimeline.php?id=${idEvent}`)
+            ]);
+
+            const dadosStats = await respStats.json();
+            const dadosTimeline = await respTimeline.json();
+
+            return {
+                stats: (dadosStats && dadosStats.eventstats) ? dadosStats.eventstats : [],
+                timeline: (dadosTimeline && dadosTimeline.timeline) ? dadosTimeline.timeline : [],
+                erro: false
+            };
+        } catch (e) {
+            console.error("Erro ao buscar detalhes do jogo " + idEvent, e);
+            return { stats: [], timeline: [], erro: true };
+        }
+    }
+
+    function renderizarDetalhes(idEvent, detalhes) {
+        const container = document.getElementById(`detalhes-${idEvent}`);
+        if (!container) return;
+
+        const gols = detalhes.timeline.filter(t => t.strTimeline === "Goal");
+
+        let html = "";
+
+        if (detalhes.stats.length > 0) {
+            html += `<div class="bloco-detalhe"><h4>Estatísticas da Partida</h4>`;
+            detalhes.stats.forEach(s => {
+                html += `
+                    <div class="linha-stat">
+                        <span class="valor-home">${s.intHome}</span>
+                        <span class="nome-stat">${s.strStat}</span>
+                        <span class="valor-away">${s.intAway}</span>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+        }
+
+        if (gols.length > 0) {
+            html += `<div class="bloco-detalhe"><h4>Gols</h4>`;
+            gols.forEach(g => {
+                html += `
+                    <div class="gol-item">
+                        <span class="minuto">${g.intTime || '?'}'</span>
+                        <span>⚽ ${g.strPlayer || 'Jogador não informado'} (${g.strTeam || ''})</span>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+        }
+
+        if (detalhes.stats.length === 0 && gols.length === 0) {
+            html = detalhes.erro
+                ? `<p class="aviso-sem-detalhe">Não foi possível carregar os detalhes agora (verifique a conexão). Se estiver testando o arquivo localmente, isso também pode acontecer pela política de CORS do navegador — funciona normalmente quando o site está publicado online.</p>`
+                : `<p class="aviso-sem-detalhe">A API não disponibiliza estatísticas detalhadas para este jogo.</p>`;
+        }
+
+        container.innerHTML = html;
+    }
+
+    document.getElementById("filtroTime").addEventListener("input", (e) => {
+        const termo = e.target.value.trim().toLowerCase();
+
+        if (!termo) {
+            renderizarLista(todosJogosEncerrados);
+            return;
+        }
+
+        const filtrados = todosJogosEncerrados.filter(evt =>
+            evt.strHomeTeam.toLowerCase().includes(termo) ||
+            evt.strAwayTeam.toLowerCase().includes(termo)
+        );
+
+        renderizarLista(filtrados);
+    });
 
     window.addEventListener("DOMContentLoaded", carregarResultadosBrasileirao);
 </script>
