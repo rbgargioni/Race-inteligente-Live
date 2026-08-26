@@ -109,6 +109,33 @@
             border-radius: 4px;
             font-size: 0.75rem;
         }
+
+        .aviso-demo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(234, 179, 8, 0.1);
+            border: 1px solid #eab308;
+            color: #fde68a;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+        }
+        .aviso-demo strong { color: #eab308; }
+
+        .tag-demo {
+            display: inline-block;
+            background: #eab308;
+            color: #1e1b0e;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            padding: 2px 7px;
+            border-radius: 4px;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
     </style>
 </head>
 <body>
@@ -132,11 +159,19 @@
 
     <!-- Conteúdo principal -->
     <main class="container">
-        
+
+        <!-- Aviso de Modo Demonstração -->
+        <div class="aviso-demo">
+            <span style="font-size: 1.3rem;">⚠️</span>
+            <span>
+                <strong>MODO DEMONSTRAÇÃO:</strong> a probabilidade abaixo é calculada por uma fórmula simplificada de exemplo (não reflete odds reais de mercado) e a "Banca / Saldo" é fictícia — o resultado de cada entrada simulada é sorteado aleatoriamente, apenas para testar a interface.
+            </span>
+        </div>
+
         <!-- Dashboard da Banca -->
         <div class="grid-dashboard">
             <div class="stat-card">
-                <span class="label">Banca / Saldo</span>
+                <span class="label">Banca / Saldo <span class="tag-demo">SIMULADO</span></span>
                 <span class="value text-blue" id="disp-saldo">R$ 1.000,00</span>
             </div>
             <div class="stat-card">
@@ -217,7 +252,7 @@
 
         <!-- 2. Painel de Probabilidades Calculadas -->
         <section class="card" style="margin-top: 20px;">
-            <h2>2. Análise de Probabilidade do Robô</h2>
+            <h2>2. Análise de Probabilidade do Robô <span class="tag-demo">ESTIMATIVA DEMO</span></h2>
             <div id="resultado-analise">
                 <p style="font-size: 0.9rem; color: #94a3b8;">Selecione um jogo e clique em "Analisar Probabilidades".</p>
             </div>
